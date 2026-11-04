@@ -32,3 +32,11 @@ trademarks of Wizards of the Coast LLC.
 pnpm install
 pnpm check
 ```
+
+### Dice CLI
+
+```bash
+pnpm --filter @iron-scribe/dice build
+pnpm roll -- 2d6+3
+pnpm roll -- d20 --adv -m 5 --seed 42
+```
