@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local models and large binaries
+*.gguf
+*.bin
+*.safetensors
+
+# Logs and OS junk
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Misc
+.turbo/
+tmp/
+temp/
