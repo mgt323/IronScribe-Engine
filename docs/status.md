@@ -4,7 +4,7 @@
 | ----- | ------------------------------------- | ----------- |
 | 0     | Monorepo, lint, Vitest, AGENTS.md, CI | Done        |
 | 1     | dice                                  | Done        |
-| 2     | engine-core                           | Not started |
+| 2     | engine-core                           | Done        |
 | 3     | SRD import                            | Not started |
 | 4     | D&D rules                             | Not started |
 | 5     | LLM providers + eval                  | Not started |
@@ -29,3 +29,13 @@
   count 1..100, sides 2..1000
 - Critical: `roll(..., { critical: true })` doubles dice terms only
 - Advantage: both advantage and disadvantage resolve to normal (SRD)
+
+## Stage 2 notes
+
+- State: entities (hp, `system` bag), `spawnOrder`, global `system` bag, `rng`
+- Core events are a closed union; rule systems add events via `system` +
+  `applySystemEvent`
+- `perform` validates aliases, resolves with a restored RNG, then logs
+  `rng.advanced` only if the RNG moved; replaying events alone rebuilds state
+- One undo step is one commit; undo/redo restore the RNG
+- Tested with a fake rule system (`poke`, `wait`)
