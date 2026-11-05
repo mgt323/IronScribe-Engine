@@ -160,6 +160,58 @@ describe('runProcedure', () => {
   });
 });
 
+describe('snapshot / restore', () => {
+  it('drops a commit without leaving it on the redo stack', () => {
+    const engine = setup();
+    const before = engine.snapshot();
+    engine.perform(poke);
+    expect(engine.commits.length).toBe(2);
+    engine.restore(before);
+    expect(engine.commits).toEqual(before.commits);
+    expect(engine.canRedo).toBe(false);
+    expect(engine.state).toEqual(replay(initial, before.commits, createFakeSystem()));
+  });
+
+  it('puts back the redo stack the snapshot recorded', () => {
+    const engine = setup();
+    engine.perform(poke);
+    engine.undo();
+    const snap = engine.snapshot();
+    expect(engine.canRedo).toBe(true);
+    engine.redo();
+    engine.restore(snap);
+    expect(engine.canRedo).toBe(true);
+    expect(engine.commits).toEqual(snap.commits);
+  });
+});
+
+describe('fake system hooks', () => {
+  it('names a check catalog, a fixed DC, and spawn outcomes', () => {
+    const system = createFakeSystem();
+    expect(system.checkCatalog?.abilities).toContain('dex');
+    expect(system.checkCatalog?.skills).toContain('stealth');
+    expect(
+      system.resolveCheckDc?.(initial, { actorId: 'hero', ability: 'dex', skill: 'stealth' }),
+    ).toBe(12);
+    expect(system.resolveSpawn?.(initial, { query: 'rat', count: 1 })?.status).toBe('matched');
+    expect(system.resolveSpawn?.(initial, { query: 'goblin', count: 1 })?.status).toBe('ambiguous');
+    expect(system.resolveSpawn?.(initial, { query: 'dragon', count: 1 })?.status).toBe('not_found');
+  });
+
+  it('runs a check procedure without rolling dice', () => {
+    const engine = setup();
+    const commit = engine.runProcedure('check', {
+      kind: 'check',
+      actorId: 'hero',
+      ability: 'dex',
+      skill: 'stealth',
+      dc: 12,
+    });
+    expect(commit.facts[0]?.text).toBe('hero stealth');
+    expect(commit.events.some((event) => event.type === 'rng.advanced')).toBe(false);
+  });
+});
+
 describe('replay and determinism', () => {
   it('replay(commits) deep-equals live state including rng', () => {
     const engine = setup();

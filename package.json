@@ -17,7 +17,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "roll": "node ./packages/dice/bin/roll.mjs"
+    "roll": "node ./packages/dice/bin/roll.mjs",
+    "play": "node ./apps/cli/bin/play.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

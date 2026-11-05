@@ -2,17 +2,30 @@
 
 ## Purpose
 
-Turn loop: intent, NPC turn, memory. Calls `RuleSystem.availableActions`,
-asks the LLM for aliases or narration, then asks the engine to execute.
-Depends on `@iron-scribe/engine-core` and `@iron-scribe/llm`. Must not import
-a concrete system package.
+Turn loop for one player actor. The model picks spawn, a check, or a menu
+alias, then narrates facts the engine already resolved. Depends on
+`@iron-scribe/engine-core` and `@iron-scribe/llm`. Must not import a concrete
+system package. It never rolls dice, never chooses a DC, and never writes
+state except by calling the engine.
 
 ## Public interface
 
-TBD in Stage 6 (CLI play) and Stage 9 (memory).
+- `createOrchestrator({ engine, system, llm, actorId })`
+- `runTurn(input)` — intent, then spawn, check, and a decision from the menu
+  rebuilt after those commits. Narration is last
+- `runSpawn`, `runAction`, `runProcedureTurn` share that undo history
+- `undoTurn` / `redoTurn` each call `engine.restore` once for the whole turn.
+  Clarify, none, and a failed object call do not push history. A failed object
+  call restores the pre-turn snapshot and does not leave those commits on the
+  engine redo stack
+- Narration is recorded after the history entry. A stream that throws keeps
+  the partial text and sets `narrationError`. The mechanics stay committed
+- `buildIntentSchema` / `buildDecisionSchema` are flat. An empty alias list is
+  `z.null()`, never `z.enum([])`. Intent has no aliases and no DC
+- Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules
 
-- Use a fake `RuleSystem` and a fake LLM client in unit tests.
-- Assert that invalid aliases abort with no state change after one repair retry.
+- Use `@iron-scribe/engine-core/testing` and `createScriptedLlmClient`.
+- An invalid alias aborts with no state change after one repair retry.
 - Keep files under about 300 lines.

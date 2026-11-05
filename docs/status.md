@@ -9,7 +9,7 @@
 | 3b    | Full SRD import (all 25 files)        | Done        |
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
-| 6     | CLI play                              | Not started |
+| 6     | CLI play                              | Done        |
 | 7     | Combat                                | Not started |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
@@ -114,3 +114,29 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   6/6 first-try schema, 0 repairs, 7/7 semantic, mean 888 ms (p50 663, max 1525).
   Load another model and rerun `pnpm --filter @iron-scribe/llm eval` to compare.
   GPT OSS 20B and Ornith-1.5-35B-A3B were not loaded during this run
+
+## Stage 6 notes
+
+- `@iron-scribe/orchestrator` is the only caller that changes state during play.
+  One player actor. No NPC turns (Stage 7)
+- Free text is two model calls: an intent (spawn, check, wants an action — no
+  aliases and no DC), then a decision from the menu rebuilt after those commits.
+  An empty alias list is `null`, never an empty enum
+- `resolveCheckDc` is engine-owned. Official SRD typical DCs are 5 / 10 / 15 /
+  20 / 25 / 30. Unbanded checks use `PROJECT_DEFAULT_CHECK_DC` (12), a temporary
+  fallback, not an SRD band
+- Stealth is a normal ability check. The fact is `Stealth N vs DC 12, success|failure`.
+  It does not grant Invisible, change Advantage, or spend an action
+- `undoTurn` / `redoTurn` restore one `EngineSnapshot` for the whole turn.
+  Clarify, none, `/status`, and `/sheet` do not push history or clear redo.
+  A failed object call restores the pre-turn snapshot with no redo trace.
+  Narration runs after that history entry; a broken stream keeps partial text
+- Spawn count is 1..10. Ambiguous catalog matches are capped at 10. `goblin`
+  and `goblins` stay the three SRD goblins, including Goblin Boss
+- The CLI hero is a fixed SRD 5.2.1 Level 1 Rogue (d8, 10 HP, proficiency +2,
+  DEX and INT saves, four Rogue skills, Expertise in two). The model may only
+  suggest a name and a backstory. The hero is spawned before the orchestrator,
+  so `/undo` does not remove them
+- `pnpm play` takes `--url`, `--provider`, `--model`, `--schema-mode`,
+  `--api-key`, and `--seed`. The key may also come from `GEMINI_API_KEY`,
+  `GOOGLE_API_KEY`, or `OPENAI_API_KEY`. It is never printed, logged, or saved

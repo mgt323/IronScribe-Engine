@@ -1,5 +1,5 @@
 export { applyEvent, applyEvents } from './apply.js';
-export { type Commit, type Engine, createEngine } from './engine.js';
+export { type Commit, type Engine, type EngineSnapshot, createEngine } from './engine.js';
 export { EngineError, type EngineErrorCode } from './errors.js';
 export type { CoreEvent, SystemEvent } from './events.js';
 export { validateRequest } from './menu.js';
@@ -7,6 +7,9 @@ export { replay } from './replay.js';
 export type {
   ActionMenu,
   ActionRequest,
+  CheckCatalog,
+  CheckDcContext,
+  CheckDifficultyBand,
   Fact,
   MenuAction,
   MenuTarget,
@@ -14,6 +17,9 @@ export type {
   ResolvedRequest,
   Resolution,
   RuleSystem,
+  SpawnCandidate,
+  SpawnRequest,
+  SpawnResolution,
 } from './rule-system.js';
 export {
   type Entity,
