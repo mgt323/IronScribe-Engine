@@ -8,7 +8,7 @@
 | 3     | SRD import                            | Done        |
 | 3b    | Full SRD import (all 25 files)        | Done        |
 | 4     | D&D rules                             | Done        |
-| 5     | LLM providers + eval                  | Not started |
+| 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Not started |
 | 7     | Combat                                | Not started |
 | 8     | Web UI                                | Not started |
@@ -97,3 +97,20 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   and not applied. Monster initiative is Dexterity only
 - Deferred to stage 7: Multiattack, save actions, spells on the menu, NPC
   action choice, turn advancement, death saves, exhaustion level 6 death
+
+## Stage 5 notes
+
+- `@iron-scribe/llm` has one client over an OpenAI-compatible adapter (llama.cpp,
+  LM Studio, Ollama, KoboldCpp) and a Gemini adapter. Game packages stay out of it
+- Model schemas are flat Zod objects. `generateObject` allows one repair retry, then
+  throws `repair_exhausted` with both attempts. Text and streaming calls do not retry
+- Replies may include a `<think>` block, a stray `</think>`, or a Harmony final channel.
+  Those are removed before JSON parsing and before narration is returned
+- The stable `prefix` is the first message. The JSON schema is appended to the scene
+  so per-turn aliases do not bust the prompt cache. `json_schema` falls back to
+  `json_object` on HTTP 400 or 422
+- Live eval against KoboldCpp at `127.0.0.1:5001`, model
+  `koboldcpp/gemma-4-26B-A4B-it-qat-uncensored-heretic-UDmerge-Q4_K_XXL`:
+  6/6 first-try schema, 0 repairs, 7/7 semantic, mean 888 ms (p50 663, max 1525).
+  Load another model and rerun `pnpm --filter @iron-scribe/llm eval` to compare.
+  GPT OSS 20B and Ornith-1.5-35B-A3B were not loaded during this run
