@@ -10,7 +10,7 @@ Version 1 is theater-of-the-mind and single player.
 
 ## Status
 
-Stages 0-3 (tooling, dice, engine-core, SRD import) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
+Stages 0-4 (tooling, dice, engine-core, SRD import, D&D rules) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
 
 ## License
 

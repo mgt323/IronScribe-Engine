@@ -7,7 +7,7 @@
 | 2     | engine-core                           | Done        |
 | 3     | SRD import                            | Done        |
 | 3b    | Full SRD import (all 25 files)        | Done        |
-| 4     | D&D rules                             | Not started |
+| 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Not started |
 | 6     | CLI play                              | Not started |
 | 7     | Combat                                | Not started |
@@ -80,3 +80,20 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   bails on ambiguity) or `text-only` (`resolution: 'none'`). Stage 4 should trust
   `override` first and treat `parsed` as best effort
 - CI now runs on `master`
+
+## Stage 4 notes
+
+- `engine.runProcedure(label, procedure)` is the seeded, logged, undoable path
+  for rolls the engine triggers (checks, saves, initiative). `commit()` still
+  cannot roll. A system without `runProcedure` throws `no_procedure_handler`
+- Characters are a minimal sheet in `entity.system.character`: level, abilities,
+  proficiencies, weapons, armor, shield, hit point maximum. No classes, species
+  or features (Sneak Attack waits for a character stage)
+- Rules covered, with SRD 5.2.1 tests: ability modifiers, proficiency bonus,
+  checks, saves, weapon and monster attacks, critical hits, damage,
+  immunity/resistance/vulnerability, basic conditions, exhaustion (−2 per
+  level), initiative
+- Theater of the mind: melee is within 5 feet. Conditional defenses are noted
+  and not applied. Monster initiative is Dexterity only
+- Deferred to stage 7: Multiattack, save actions, spells on the menu, NPC
+  action choice, turn advancement, death saves, exhaustion level 6 death

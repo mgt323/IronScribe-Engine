@@ -12,17 +12,23 @@ or concrete system packages.
   global `system` bag), `Entity` (hp, per-entity `system` bag)
 - `createEngine({ system, initialState })` -> `Engine`: `state`, `commits`,
   `canUndo`, `canRedo`, `menu(actorId)`, `perform(ActionRequest)`,
-  `commit(label, events)` (request `null`), `undo()`, `redo()`
+  `runProcedure(label, Procedure)`, `commit(label, events)` (request and
+  procedure `null`), `undo()`, `redo()`
+- `Commit` carries `request` (player action) or `procedure` (engine-triggered
+  roll), never both
 - `applyEvent`, `applyEvents` (pure), `replay(initial, commits, system)`,
   `validateRequest(menu, request)` -> `ResolvedRequest`
 - `RuleSystem`: `availableActions`, `resolve(state, ResolvedRequest, rng)`,
-  optional `applySystemEvent`
+  optional `runProcedure(state, Procedure, rng)`, optional `applySystemEvent`
+- `Procedure` is `{ kind, ...payload }` with JSON-safe values
 - `EngineError` with a `code`
 
 Notes:
 
-- Only the engine emits `rng.advanced`; rule systems and `commit()` get
-  `forbidden_event`. Undo and replay restore the dice stream through it.
+- Only the engine emits `rng.advanced`; rule systems, `runProcedure`, and
+  `commit()` get `forbidden_event`. Undo and replay restore the dice stream
+  through it.
+- `runProcedure` is missing -> `no_procedure_handler`, and nothing is committed.
 - One undo step is one commit.
 - Combat state (round, turn, initiative) lives in the rule system's global
   `system` bag, not in the core.

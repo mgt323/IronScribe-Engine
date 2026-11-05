@@ -2,7 +2,7 @@ import { roll } from '@iron-scribe/dice';
 
 import { EngineError } from '../errors.js';
 import type { SystemEvent } from '../events.js';
-import type { ActionMenu, RuleSystem } from '../rule-system.js';
+import type { ActionMenu, Procedure, RuleSystem } from '../rule-system.js';
 import type { Entity, GameState, JsonValue } from '../state.js';
 
 export function makeEntity(id: string, overrides: Partial<Entity> = {}): Entity {
@@ -50,6 +50,20 @@ export function createFakeSystem(options: { withReducer?: boolean } = {}): RuleS
       return {
         events: [{ type: 'entity.damaged', entityId: target.entityId, amount }],
         facts: [{ key: 'poke', text: `${target.entityId} takes ${String(amount)}` }],
+      };
+    },
+    runProcedure(_state, procedure: Procedure, rng) {
+      if (procedure.kind !== 'rollHeal') {
+        throw new EngineError('unknown_alias', `Unknown procedure: ${procedure.kind}`);
+      }
+      const entityId = procedure['entityId'];
+      if (typeof entityId !== 'string') {
+        throw new EngineError('unknown_entity', 'rollHeal needs an entityId');
+      }
+      const amount = roll('1d4', rng).total;
+      return {
+        events: [{ type: 'entity.healed' as const, entityId, amount }],
+        facts: [{ key: 'heal', text: `${entityId} heals ${String(amount)}` }],
       };
     },
   };

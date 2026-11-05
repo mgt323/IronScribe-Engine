@@ -1,7 +1,13 @@
 import type { Rng } from '@iron-scribe/dice';
 
 import type { CoreEvent, SystemEvent } from './events.js';
-import type { EntityId, GameState } from './state.js';
+import type { EntityId, GameState, JsonValue } from './state.js';
+
+/** A system-specific engine-triggered roll. `kind` names it; other fields are the payload. */
+export interface Procedure {
+  readonly kind: string;
+  readonly [key: string]: JsonValue;
+}
 
 export interface MenuAction {
   /** Per-turn alias: "A1".. */
@@ -52,5 +58,7 @@ export interface RuleSystem {
   readonly id: string;
   availableActions(state: GameState, actorId: EntityId): ActionMenu;
   resolve(state: GameState, request: ResolvedRequest, rng: Rng): Resolution;
+  /** Engine-triggered rolls (checks, saves, initiative). Not a player menu action. */
+  runProcedure?(state: GameState, procedure: Procedure, rng: Rng): Resolution;
   applySystemEvent?(state: GameState, event: SystemEvent): GameState;
 }

@@ -1,17 +1,26 @@
-import { restoreRng } from '@iron-scribe/dice';
+import { restoreRng, type Rng } from '@iron-scribe/dice';
 
 import { applyEvents } from './apply.js';
 import { EngineError } from './errors.js';
 import type { CoreEvent } from './events.js';
 import { validateRequest } from './menu.js';
 import { replay } from './replay.js';
-import type { ActionMenu, ActionRequest, Fact, RuleSystem } from './rule-system.js';
+import type {
+  ActionMenu,
+  ActionRequest,
+  Fact,
+  Procedure,
+  Resolution,
+  RuleSystem,
+} from './rule-system.js';
 import type { EntityId, GameState } from './state.js';
 
 export interface Commit {
   readonly index: number;
   readonly label: string;
   readonly request: ActionRequest | null;
+  /** Set when the commit came from runProcedure; null for player actions and commit(). */
+  readonly procedure: Procedure | null;
   readonly events: readonly CoreEvent[];
   readonly facts: readonly Fact[];
 }
@@ -23,6 +32,7 @@ export interface Engine {
   readonly canRedo: boolean;
   menu(actorId: EntityId): ActionMenu;
   perform(request: ActionRequest): Commit;
+  runProcedure(label: string, procedure: Procedure): Commit;
   commit(label: string, events: readonly CoreEvent[]): Commit;
   undo(): void;
   redo(): void;
@@ -58,15 +68,34 @@ export function createEngine(options: { system: RuleSystem; initialState: GameSt
   const append = (
     label: string,
     request: ActionRequest | null,
+    procedure: Procedure | null,
     events: readonly CoreEvent[],
     facts: readonly Fact[],
   ): Commit => {
     const next = applyEvents(state, events, system);
-    const entry: Commit = { index: commits.length, label, request, events, facts };
+    const entry: Commit = { index: commits.length, label, request, procedure, events, facts };
     state = next;
     commits = [...commits, entry];
     redoStack = [];
     return entry;
+  };
+
+  /** Restore the seeded RNG, run a resolution, and log rng.advanced only if it moved. */
+  const resolveSeeded = (
+    label: string,
+    request: ActionRequest | null,
+    procedure: Procedure | null,
+    resolve: (rng: Rng) => Resolution,
+  ): Commit => {
+    const rng = restoreRng(state.rng);
+    const resolution = resolve(rng);
+    rejectRngEvents(resolution.events);
+    const after = rng.getState();
+    const events: CoreEvent[] = [...resolution.events];
+    if (after.algorithm !== state.rng.algorithm || after.seed !== state.rng.seed) {
+      events.push({ type: 'rng.advanced', state: after });
+    }
+    return append(label, request, procedure, events, resolution.facts);
   };
 
   return {
@@ -86,19 +115,24 @@ export function createEngine(options: { system: RuleSystem; initialState: GameSt
     perform(request) {
       const available = menu(request.actorId);
       const resolved = validateRequest(available, request);
-      const rng = restoreRng(state.rng);
-      const resolution = system.resolve(state, resolved, rng);
-      rejectRngEvents(resolution.events);
-      const after = rng.getState();
-      const events: CoreEvent[] = [...resolution.events];
-      if (after.algorithm !== state.rng.algorithm || after.seed !== state.rng.seed) {
-        events.push({ type: 'rng.advanced', state: after });
+      return resolveSeeded(resolved.action.label, request, null, (rng) =>
+        system.resolve(state, resolved, rng),
+      );
+    },
+    runProcedure(label, procedure) {
+      if (!system.runProcedure) {
+        throw new EngineError('no_procedure_handler', 'Rule system has no runProcedure');
       }
-      return append(resolved.action.label, request, events, resolution.facts);
+      return resolveSeeded(label, null, procedure, (rng) => {
+        if (!system.runProcedure) {
+          throw new EngineError('no_procedure_handler', 'Rule system has no runProcedure');
+        }
+        return system.runProcedure(state, procedure, rng);
+      });
     },
     commit(label, events) {
       rejectRngEvents(events);
-      return append(label, null, [...events], []);
+      return append(label, null, null, [...events], []);
     },
     undo() {
       const last = commits.at(-1);

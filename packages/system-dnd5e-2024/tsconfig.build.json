@@ -6,7 +6,7 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/testing/**"],
   "references": [
     { "path": "../dice/tsconfig.build.json" },
     { "path": "../engine-core/tsconfig.build.json" }

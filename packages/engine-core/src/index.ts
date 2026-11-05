@@ -10,6 +10,7 @@ export type {
   Fact,
   MenuAction,
   MenuTarget,
+  Procedure,
   ResolvedRequest,
   Resolution,
   RuleSystem,
