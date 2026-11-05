@@ -10,7 +10,7 @@ Version 1 is theater-of-the-mind and single player.
 
 ## Status
 
-Stage 0 (monorepo tooling) is done. See [docs/status.md](docs/status.md).
+Stage 1 (dice) is done. See [docs/status.md](docs/status.md).
 
 ## License
 
@@ -31,4 +31,12 @@ trademarks of Wizards of the Coast LLC.
 ```bash
 pnpm install
 pnpm check
+```
+
+### Dice CLI
+
+```bash
+pnpm --filter @iron-scribe/dice build
+pnpm roll -- 2d6+3
+pnpm roll -- d20 --adv -m 5 --seed 42
 ```
