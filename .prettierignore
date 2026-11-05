@@ -1,4 +1,6 @@
 pnpm-lock.yaml
+eval.json
+*.jsonl
 dist
 coverage
 node_modules

@@ -20,6 +20,8 @@ coverage/
 
 # Logs and OS junk
 *.log
+eval.json
+*.jsonl
 npm-debug.log*
 pnpm-debug.log*
 .DS_Store
