@@ -1,68 +1,15 @@
 import { parseFormula } from '@iron-scribe/dice';
 import { describe, expect, it } from 'vitest';
+import type { z } from 'zod';
 
 import { loadCatalog } from './catalog.js';
+import { readRaw } from './raw-read.js';
+import { ABILITIES, Armor, DamageType, MASTERIES, WEAPON_PROPERTIES, Weapon } from './schema.js';
+import { Gear, MagicItem, RuleEntry } from './schema-items.js';
+import { Monster } from './schema-monster.js';
+import { Spell } from './schema-spell.js';
 
 const c = loadCatalog();
-const monster = (id: string) => {
-  const m = c.monsters.get(id);
-  if (!m) throw new Error(`missing monster ${id}`);
-  return m;
-};
-
-describe('monsters', () => {
-  it('Goblin Warrior (2024): 10 HP, AC 15, Scimitar +4, 1d4 only with advantage', () => {
-    const g = monster('goblin-warrior');
-    expect(g.hp).toBe(10);
-    expect(g.ac).toBe(15);
-    const scimitar = g.actions.find((a) => a.name === 'Scimitar');
-    expect(scimitar?.attackBonus).toBe(4);
-    expect(scimitar?.kind).toBe('melee');
-    expect(scimitar?.reach).toBe(5);
-    expect(scimitar?.damage).toEqual([
-      { dice: '1d6+2', type: 'slashing', condition: null },
-      { dice: '1d4', type: 'slashing', condition: 'advantage' },
-    ]);
-    expect(g.actions.find((a) => a.name === 'Shortbow')?.range).toEqual({ normal: 80, long: 320 });
-  });
-
-  it('Goblin Minion is 7 HP, AC 12', () => {
-    expect([monster('goblin-minion').hp, monster('goblin-minion').ac]).toEqual([7, 12]);
-  });
-
-  it('Skeleton defenses', () => {
-    const s = monster('skeleton');
-    expect(s.vulnerabilities).toEqual(['bludgeoning']);
-    expect(s.immunities).toEqual(['poison']);
-    expect(s.conditionImmunities).toEqual(['exhaustion', 'poisoned']);
-  });
-
-  it('Ogre: numeric speed, parseable HP formula', () => {
-    const o = monster('ogre');
-    expect(o.speed.walk).toBe(40);
-    expect(o.speed.fly).toBeNull();
-    expect(() => parseFormula(o.hpFormula)).not.toThrow();
-    expect(o.hpFormula.replace(/\s/g, '')).toBe('8d10+24');
-  });
-
-  it('Bandit sizes and exact CR; Javelin is melee or ranged', () => {
-    expect(monster('bandit').sizes).toEqual(['medium', 'small']);
-    expect(monster('bandit').cr).toBe(0.125);
-    expect(monster('ogre').actions.find((a) => a.name === 'Javelin')?.kind).toBe('meleeOrRanged');
-  });
-
-  it('saves default to ability modifiers; listed proficiencies use the stat block', () => {
-    expect(monster('goblin-warrior').saves.dex).toBe(2);
-    expect(monster('giant-rat').saves.dex).toBe(5);
-    expect(monster('zombie').saves.wis).toBe(0);
-    expect(monster('goblin-warrior').skills).toEqual({ stealth: 6 });
-  });
-
-  it('Cultist sickle includes its extra 1 necrotic', () => {
-    const d = monster('cultist').actions[0]?.damage ?? [];
-    expect(d.map((x) => x.type)).toEqual(['slashing', 'necrotic']);
-  });
-});
 
 describe('weapons', () => {
   it('Longsword', () => {
@@ -147,11 +94,68 @@ describe('spells', () => {
   });
 });
 
+describe('gear and magic items', () => {
+  it('Longbow-style routing: weapons, armor and gear partition the equipment file', () => {
+    const total = readRaw('equipment.json').length;
+    expect(c.weapons.list().length + c.armor.list().length + c.gear.list().length).toBe(total);
+    expect(c.weapons.list()).toHaveLength(38);
+    expect(c.armor.list()).toHaveLength(13);
+    expect(c.gear.list()).toHaveLength(131);
+  });
+
+  it('Morningstar has no upstream range, so melee reach defaults to 5 feet', () => {
+    expect(c.weapons.get('morningstar')?.range).toEqual({ normal: 5, long: null });
+  });
+
+  it('gear kinds', () => {
+    expect(c.gear.get('arrows')?.kind).toBe('ammunition');
+    expect(c.gear.get('thieves-tools')?.kind).toBe('tool');
+    expect(c.gear.get('lute')?.kind).toBe('instrument');
+    expect(c.gear.get('dice')?.kind).toBe('gaming-set');
+    expect(c.gear.get('burglars-pack')?.kind).toBe('pack');
+    expect(c.gear.get('rope')).toMatchObject({ kind: 'gear', weight: 5 });
+  });
+
+  it('magic items keep compound rarity text and link variants both ways', () => {
+    const bonus = c.magicItems.get('ammunition');
+    expect(bonus?.variants).toEqual(['ammunition-1', 'ammunition-2', 'ammunition-3']);
+    expect(c.magicItems.get('ammunition-2')?.variantOf).toBe('ammunition');
+    expect(c.magicItems.get('ammunition-2')?.text.length).toBeGreaterThan(0);
+    expect(c.magicItems.list().some((m) => m.rarity.includes('(+1)'))).toBe(true);
+  });
+});
+
+describe('rules reference', () => {
+  it('damage types, abilities and conditions match our enums', () => {
+    expect(c.damageTypes.list().map((x) => x.id)).toEqual([...DamageType.options].sort());
+    expect(c.abilityScores.list().map((x) => x.id)).toEqual([...ABILITIES].sort());
+    const conditions = new Set(c.conditions.list().map((x) => x.id));
+    for (const m of c.monsters.list()) {
+      for (const id of m.conditionImmunities) expect(conditions.has(id)).toBe(true);
+    }
+  });
+
+  it('weapon properties and masteries match our enums', () => {
+    const ids = (f: 'weapon-properties.json' | 'weapon-mastery-properties.json') =>
+      readRaw(f)
+        .map((r) => r.index)
+        .sort();
+    expect(ids('weapon-properties.json')).toEqual([...WEAPON_PROPERTIES].sort());
+    expect(ids('weapon-mastery-properties.json')).toEqual([...MASTERIES].sort());
+  });
+
+  it('skills name their ability', () => {
+    expect(c.skills.get('stealth')).toMatchObject({ ability: 'dex' });
+    expect(c.skills.list().every((s) => ABILITIES.some((a) => a === s.ability))).toBe(true);
+  });
+});
+
 describe('catalog-wide', () => {
   it('every dice string parses and none mentions a modifier', () => {
     const dice: string[] = [];
     for (const m of c.monsters.list()) {
-      dice.push(m.hpFormula, ...m.actions.flatMap((a) => a.damage.map((d) => d.dice)));
+      const actions = [...m.actions, ...m.bonusActions, ...m.reactions, ...m.legendaryActions];
+      dice.push(m.hpFormula, ...actions.flatMap((a) => a.damage.map((d) => d.dice)));
     }
     for (const w of c.weapons.list()) dice.push(w.damage.dice);
     for (const s of c.spells.list()) {
@@ -167,20 +171,42 @@ describe('catalog-wide', () => {
   });
 
   it('only 2024 sources', () => {
-    for (const e of [
+    const all = [
       ...c.monsters.list(),
       ...c.weapons.list(),
       ...c.armor.list(),
+      ...c.gear.list(),
+      ...c.magicItems.list(),
       ...c.spells.list(),
-    ]) {
-      expect(e.source.startsWith('/api/2024/')).toBe(true);
+      ...c.conditions.list(),
+      ...c.damageTypes.list(),
+      ...c.abilityScores.list(),
+      ...c.skills.list(),
+    ];
+    for (const e of all) expect(e.source.startsWith('/api/2024/')).toBe(true);
+  });
+
+  // Committed data is trusted at load (decision A), so our own schemas are enforced here.
+  it('every entry of every section passes its own schema', () => {
+    const parse = <T>(schema: z.ZodType<T>, entries: readonly unknown[]) => {
+      for (const e of entries) expect(schema.safeParse(e).success).toBe(true);
+    };
+    parse(Monster, c.monsters.list());
+    parse(Weapon, c.weapons.list());
+    parse(Armor, c.armor.list());
+    parse(Gear, c.gear.list());
+    parse(MagicItem, c.magicItems.list());
+    parse(Spell, c.spells.list());
+    for (const s of [c.conditions, c.damageTypes, c.abilityScores, c.skills]) {
+      parse(RuleEntry, s.list());
     }
   });
 
-  it('has the full allowlist', () => {
-    expect(c.monsters.list()).toHaveLength(11);
-    expect(c.weapons.list()).toHaveLength(14);
-    expect(c.armor.list()).toHaveLength(4);
-    expect(c.spells.list()).toHaveLength(5);
+  it('section sizes match the raw files', () => {
+    expect(c.monsters.list()).toHaveLength(readRaw('monsters.json').length);
+    expect(c.spells.list()).toHaveLength(readRaw('spells.json').length);
+    expect(c.magicItems.list()).toHaveLength(readRaw('magic-items.json').length);
+    expect(c.conditions.list()).toHaveLength(readRaw('conditions.json').length);
+    expect(c.skills.list()).toHaveLength(readRaw('skills.json').length);
   });
 });

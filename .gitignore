@@ -35,3 +35,6 @@ Thumbs.db
 .turbo/
 tmp/
 temp/
+
+# SRD import staging
+packages/system-dnd5e-2024/data/srd-5.2.1/.staging/

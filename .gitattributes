@@ -18,3 +18,7 @@
 *.woff binary
 *.woff2 binary
 *.gguf binary
+
+# Vendored / generated SRD data and copied upstream schemas
+packages/system-dnd5e-2024/data/srd-5.2.1/raw/** linguist-generated=true
+packages/system-dnd5e-2024/src/catalog/upstream/** linguist-generated=true

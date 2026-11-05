@@ -1,6 +1,6 @@
 import type { Entity, EntityId } from '@iron-scribe/engine-core';
 
-import { Monster } from './schema.js';
+import { Monster } from './schema-monster.js';
 
 /** Spawn an entity from an SRD template. HP is copied, never rolled or invented. */
 export function monsterToEntity(

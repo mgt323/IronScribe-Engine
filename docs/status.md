@@ -6,6 +6,7 @@
 | 1     | dice                                  | Done        |
 | 2     | engine-core                           | Done        |
 | 3     | SRD import                            | Done        |
+| 3b    | Full SRD import (all 25 files)        | Done        |
 | 4     | D&D rules                             | Not started |
 | 5     | LLM providers + eval                  | Not started |
 | 6     | CLI play                              | Not started |
@@ -42,15 +43,40 @@
 
 ## Stage 3 notes
 
-- Raw SRD subset (pinned 5e-database commit) lives in
-  `packages/system-dnd5e-2024/data/srd-5.2.1/raw`; `pnpm --filter
-@iron-scribe/system-dnd5e-2024 srd:import` refreshes it by hand (never in CI)
-- Raw JSON is converted to our own Zod schema when the catalog loads; rules data
-  upstream lacks lives in `overrides.ts` (spell mechanics, Cultist necrotic)
+- Superseded by Stage 3b below: the subset was widened to the full data set
 - Zod 4 is used only inside `system-dnd5e-2024` to validate data; model-facing
   schemas still belong to Stage 5 (same zod version)
-- Catalog: 11 monsters, 14 weapons, 4 armor (shield is `kind: 'shield'`, adds
-  to AC), 5 spells. `find()` is exact id/name first, then whole-word match
+- Catalog: `find()` is exact id/name first, then whole-word match; armor
+  `shield` is `kind: 'shield'` and adds to AC
 - `monsterToEntity` copies HP and stores the full stat block in
   `entity.system.monster`; `readMonsterSnapshot` reads it back
 - Dice strings hold dice only; spell modifiers use `addSpellcastingMod`
+
+## Stage 3b notes (full SRD import)
+
+Done in one chat by explicit choice, an exception to one stage per chat.
+
+- Source: 5e-srd-api `packages/5e-database` at commit `6dfaa6e2` (5e-database
+  is archived). All 25 files of `src/2024/en` are in
+  `packages/system-dnd5e-2024/data/srd-5.2.1/raw`; `srd:import` fetches into a
+  staging dir, validates it strictly, then swaps it in and rewrites `SOURCE.json`
+- Upstream's Zod schemas are copied into `src/catalog/upstream/` (generated,
+  never hand-edited, exempt from style rules but typechecked and tested).
+  Production code may only type-import them (ESLint enforces this)
+- Validation: raw data is checked against upstream's strict schemas in
+  `srd:import` and in `raw-validation.test.ts`; `loadCatalog()` converts it
+  without Zod. Our own schemas are checked over every entry in
+  `catalog-data.test.ts`. Data from outside the repo (saves, future content
+  packs) must be validated when loaded (`readMonsterSnapshot` does)
+- Catalog sections: monsters (341), weapons (38), armor (13), gear (131),
+  magicItems (262), spells (339), conditions, damageTypes, abilityScores, skills.
+  Classes, levels, features, species, backgrounds etc. are imported and
+  validated but stay raw until a character stage
+- Monsters keep bonus actions, reactions, legendary actions, usage (recharge,
+  per day), `save` DCs, Multiattack as data, spellcasting, senses, forms and
+  `conditionalDefenses` (qualified defenses stay text). Flat damage upstream
+  omits is added in `overrides.ts`; Goat's Ram is a known unresolved case
+- Spells: `mechanics` is `override` (hand-checked), `parsed` (text parser,
+  bails on ambiguity) or `text-only` (`resolution: 'none'`). Stage 4 should trust
+  `override` first and treat `parsed` as best effort
+- CI now runs on `master`

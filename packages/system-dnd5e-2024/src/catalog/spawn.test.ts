@@ -36,6 +36,21 @@ describe('monsterToEntity', () => {
     expect(readMonsterSnapshot(roundTrip)).toEqual(goblin());
   });
 
+  it('the largest stat blocks (legendary actions, spellcasting) stay JSON-safe', () => {
+    const biggest = [...c.monsters.list()]
+      .sort((a, b) => JSON.stringify(b).length - JSON.stringify(a).length)
+      .slice(0, 5);
+    expect(biggest.some((m) => m.legendaryActions.length > 0)).toBe(true);
+    const dragon = c.monsters.get('adult-red-dragon');
+    if (!dragon) throw new Error('missing');
+    for (const m of [...biggest, dragon]) {
+      const e = monsterToEntity(m, 'big_1');
+      const roundTrip = JSON.parse(JSON.stringify(e)) as Entity;
+      expect(roundTrip).toEqual(e);
+      expect(readMonsterSnapshot(roundTrip)).toEqual(m);
+    }
+  });
+
   it('snapshot carries saves, skills, attacks and defenses', () => {
     const snap = readMonsterSnapshot(monsterToEntity(goblin(), 'g'));
     expect(snap.saves.dex).toBe(2);

@@ -15,12 +15,16 @@ describe('find: exact match first', () => {
 });
 
 describe('find: whole-word token match', () => {
-  it('returns every match sorted by id', () => {
-    expect(ids(c.monsters.find('goblin'))).toEqual(['goblin-minion', 'goblin-warrior']);
+  it('returns every whole-word match sorted by id; Hobgoblins do not match "goblin"', () => {
+    expect(ids(c.monsters.find('goblin'))).toEqual([
+      'goblin-boss',
+      'goblin-minion',
+      'goblin-warrior',
+    ]);
   });
   it('partial words, unknown names and empty queries return nothing', () => {
     expect(c.monsters.find('gob')).toEqual([]);
-    expect(c.monsters.find('dragon')).toEqual([]);
+    expect(c.monsters.find('zzz')).toEqual([]);
     expect(c.monsters.find('')).toEqual([]);
     expect(c.monsters.find('   ')).toEqual([]);
   });
@@ -37,7 +41,7 @@ describe('other sections', () => {
 
 describe('get and list', () => {
   it('list is sorted by id; get misses return undefined', () => {
-    for (const s of [c.monsters, c.weapons, c.armor, c.spells]) {
+    for (const s of [c.monsters, c.weapons, c.armor, c.gear, c.magicItems, c.spells]) {
       const l = ids(s.list());
       expect(l).toEqual([...l].sort());
     }

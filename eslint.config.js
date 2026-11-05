@@ -76,6 +76,63 @@ export default defineConfig(
       ],
     },
   },
+  // Handwritten code: 300-line limit (style). Copied upstream code is exempt below.
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  // Handwritten catalog code may use upstream *types* but must never run upstream schemas
+  // (committed data is validated in srd:import and in tests, not at load).
+  {
+    files: ['packages/system-dnd5e-2024/src/**/*.ts'],
+    ignores: ['**/*.test.ts', 'packages/system-dnd5e-2024/src/catalog/upstream/**'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/upstream/**'],
+              allowTypeImports: true,
+              message: 'Production code may only type-import copied upstream schemas.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Copied upstream code (written only by srd:import): style rules off, correctness on.
+  // tsc still typechecks it; imports are limited to zod and relative paths.
+  {
+    files: ['packages/system-dnd5e-2024/src/catalog/upstream/**/*.ts'],
+    ...tseslint.configs.disableTypeChecked,
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      'max-lines': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/consistent-type-imports': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: '@iron-scribe/llm', message: 'Rules packages must not import the LLM client.' },
+            {
+              name: '@iron-scribe/orchestrator',
+              message: 'Rules packages must not import the orchestrator.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@iron-scribe/*', 'node:*'],
+              message: 'Copied upstream code may import only zod and relative paths.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['packages/llm/**/*.{ts,tsx}'],
     rules: {

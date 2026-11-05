@@ -14,9 +14,12 @@ Commons Attribution 4.0 International License, available at
 https://creativecommons.org/licenses/by/4.0/legalcode.
 
 The machine-readable SRD data in
-packages/system-dnd5e-2024/data/srd-5.2.1/raw is a subset of the 2024 data from
-https://github.com/5e-bits/5e-database (MIT License), pinned to commit
-a6212beb4b278917c2cff41c2b04c4ef4f3e0d6f. See SOURCE.json in that directory.
+packages/system-dnd5e-2024/data/srd-5.2.1/raw is the full 2024 data set from
+packages/5e-database of https://github.com/5e-bits/5e-srd-api (MIT License),
+pinned to commit 6dfaa6e2f1aefc466fb45b9a64e4dd11a537ca53. See SOURCE.json in
+that directory. The Zod schemas in
+packages/system-dnd5e-2024/src/catalog/upstream are copied unchanged from the
+same commit (MIT License, see LICENSE.md in that folder).
 Our own schema and the rules data in overrides.ts are derived from SRD 5.2.1.
 
 Do not ship D&D Beyond Basic Rules or any non-SRD Wizards content.

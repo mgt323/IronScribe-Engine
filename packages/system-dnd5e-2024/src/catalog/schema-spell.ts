@@ -14,6 +14,8 @@ export const Spell = z
     rangeFeet: z.number().int().nullable(),
     concentration: z.boolean(),
     resolution: z.enum(['attack', 'save', 'auto', 'none']),
+    /** Who filled in the mechanics: hand-checked override, the text parser, or nobody. */
+    mechanics: z.enum(['override', 'parsed', 'text-only']),
     attack: z.enum(['melee', 'ranged']).nullable(),
     save: z.strictObject({ ability: Ability, onSuccess: z.enum(['half', 'none']) }).nullable(),
     damage: z
@@ -48,5 +50,11 @@ export const Spell = z
       bad(`resolution '${s.resolution}' must have null attack and save`);
     }
     if (s.cantripDice !== null && s.level !== 0) bad('cantripDice only on cantrips');
+    if (s.mechanics === 'text-only') {
+      const empty =
+        s.resolution === 'none' &&
+        [s.damage, s.heal, s.projectiles, s.cantripDice, s.upcast].every((x) => x === null);
+      if (!empty) bad("mechanics 'text-only' must carry no mechanics");
+    }
   });
 export type Spell = z.infer<typeof Spell>;
