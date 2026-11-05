@@ -141,6 +141,20 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   variant or role. Encounter definitions from a GM or scene (Stage 9) would
   replace player-driven spawning. The answer keeps the original count, attitude
   and intent (`spawnCount` survives the clarify turn)
+- Stage 7 design note, engagement: combat should not be inferred from "a hostile
+  is present and the player has a targeted action". Each entity (the player
+  included) needs an `engaged` flag, set by the engine on an attack or an
+  explicit encounter trigger. `engaged` needs per-entity perception first: who
+  can see whom, and who is aware of whom (a creature the player has not been
+  noticed by is not engaged with the player; a hidden player is not visible to
+  it). Initiative is then rolled for the engaged participants only. Surprise
+  (the `surprised` list that `rollInitiative` already accepts) comes with that
+  work and is not implemented now. Until then `encounterStart` rolls initiative
+  before the first targeted attack when a hostile is present, with nobody
+  surprised
+- Intent prompt: a stance or preparation ("I prepare to fight", "I ready my
+  dagger") is not an action, so `wantsAction` stays false. Eval case
+  `no-attack-on-stance` covers it
 - Combat gaps (Stage 7): enemies are passive. Initiative opens before the first
   targeted action (`RuleSystem.encounterStart`), but nothing advances turns or
   picks monster actions. Surprise from a Stealth success is not modelled

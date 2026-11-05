@@ -7,6 +7,7 @@ import {
   count,
   facts,
   keys,
+  monsters,
   requests,
   rules,
   says,
@@ -91,6 +92,20 @@ export const ACTION_CASES = [
         [count(ctx, 'attack') === 1, 'expected one attack'],
       );
     },
+  },
+  {
+    id: 'no-attack-on-stance',
+    kind: 'negative',
+    category: 'action',
+    steps: [
+      'I squeeze through the branches and freeze: there are three wolves in front of me. I grip my dagger tighter and prepare to fight. They haven\u2019t seen me yet.',
+    ],
+    check: (ctx) =>
+      rules(
+        [monsters(ctx, 'wolf').length === 3, 'expected 3 wolves'],
+        [count(ctx, 'attack') === 0, 'attacked when the player only prepared'],
+        [count(ctx, 'initiative') === 0, 'combat started without an attack'],
+      ),
   },
   {
     id: 'attack-one-action-per-turn',
