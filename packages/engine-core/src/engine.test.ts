@@ -44,6 +44,7 @@ describe('perform', () => {
     const engine = setup();
     const c = engine.commits[0];
     expect(c?.request).toBeNull();
+    expect(c?.procedure).toBeNull();
     expect(c?.facts).toEqual([]);
     engine.undo();
     expect(engine.state).toEqual(initial);
@@ -110,6 +111,52 @@ describe('undo / redo', () => {
     const engine = createEngine({ system: createFakeSystem(), initialState: initial });
     expect(() => engine.undo()).toThrow(/undo/);
     expect(() => engine.redo()).toThrow(/redo/);
+  });
+});
+
+describe('runProcedure', () => {
+  it('logs the procedure, heals from the seeded RNG, and appends rng.advanced', () => {
+    const engine = setup();
+    engine.perform(poke);
+    const before = engine.state.entities['goblin']?.hp.current ?? 0;
+    const procedure = { kind: 'rollHeal', entityId: 'goblin' };
+    const commit = engine.runProcedure('heal', procedure);
+    expect(commit.request).toBeNull();
+    expect(commit.procedure).toEqual(procedure);
+    expect(commit.events.map((e) => e.type)).toEqual(['entity.healed', 'rng.advanced']);
+    expect(engine.state.entities['goblin']?.hp.current).toBeGreaterThan(before);
+  });
+
+  it('undo and redo restore the dice stream, and replay matches', () => {
+    const engine = setup();
+    const rngBefore = engine.state.rng;
+    engine.runProcedure('heal', { kind: 'rollHeal', entityId: 'goblin' });
+    const after = engine.state;
+    engine.undo();
+    expect(engine.state.rng).toEqual(rngBefore);
+    engine.redo();
+    expect(engine.state).toEqual(after);
+    expect(replay(initial, engine.commits, createFakeSystem())).toEqual(engine.state);
+  });
+
+  it('throws no_procedure_handler when the system has none, with no commit', () => {
+    const fake = createFakeSystem();
+    const engine = setup({
+      id: fake.id,
+      availableActions: (state, actorId) => fake.availableActions(state, actorId),
+      resolve: (state, request, rng) => fake.resolve(state, request, rng),
+    });
+    const before = engine.state;
+    expect(() => engine.runProcedure('heal', { kind: 'rollHeal', entityId: 'goblin' })).toThrow(
+      EngineError,
+    );
+    try {
+      engine.runProcedure('heal', { kind: 'rollHeal', entityId: 'goblin' });
+    } catch (e) {
+      expect((e as EngineError).code).toBe('no_procedure_handler');
+    }
+    expect(engine.state).toBe(before);
+    expect(engine.commits.length).toBe(1);
   });
 });
 

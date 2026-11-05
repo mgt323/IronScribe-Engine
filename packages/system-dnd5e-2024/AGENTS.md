@@ -8,7 +8,8 @@ required CC-BY-4.0 SRD attribution; no non-SRD Wizards content.
 
 ## Public interface
 
-Stages 3 and 3b (catalog); rules arrive in Stage 4.
+Catalog (stages 3 and 3b) and rules (stage 4). `createDnd5eSystem({ catalog })`
+implements `RuleSystem`.
 
 - `loadCatalog()` -> `{ monsters, weapons, armor, gear, magicItems, spells,
 conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
@@ -22,6 +23,29 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
   `RuleEntry`, `Spell` (`mechanics`: `override` | `parsed` | `text-only`)
 - Dice strings are plain dice only (validated with `parseFormula`); spells use
   `addSpellcastingMod`; spell `save` is `{ ability, onSuccess: 'half' | 'none' }`
+- `Character` lives in `entity.system.character` (level, abilities, save and skill
+  proficiencies, weapon proficiencies, carried weapon ids, armor id or null,
+  shield, `hpMax`). `characterToEntity` / `readCharacter`. No class or features
+- `readCreature(entity, catalog)` is the shared view: mods, AC, saves, skills,
+  initiative (Dexterity modifier only), defenses, condition immunities
+- Menu: `weapon:<id>` for each carried weapon, `monster:<actionId>` for each
+  melee or ranged monster attack. Targets are other present creatures above 0 HP.
+  Incapacitated creatures (including paralyzed, stunned, unconscious) offer nothing
+- `resolve` rolls the attack, then damage, then immunity / resistance /
+  vulnerability. Facts are engine text (`attack`, `damage`, `hp`). A character
+  at 0 HP gains Unconscious; a monster is marked defeated. No death saves
+- `runProcedure`: `check` `{ actorId, ability, skill|null, dc }`, `save`
+  `{ actorId, ability, dc }`, `initiative` `{ surprised }`. Payloads are
+  Zod-checked. Initiative writes `state.system.encounter`
+- Pure helpers: `abilityModifier`, `proficiencyBonus`, `abilityCheck`,
+  `skillCheck`, `savingThrow`, `attackRoll`, `weaponAttackBonus`,
+  `rollWeaponDamage`, `rollMonsterDamage`, `applyDefenses`, `rollInitiative`,
+  `conditionEvents`, `rollEffects`, `readConditions`
+
+Theater of the mind: melee counts as within 5 feet and ranged does not, so
+Prone and the paralyzed/unconscious critical-hit rule need no grid. Conditional
+defenses stay notes and do not change damage. Monster initiative has no bonus
+beyond Dexterity. Multiattack, spells and class features are not actions yet.
 
 ## Data
 

@@ -9,6 +9,7 @@ export type EngineErrorCode =
   | 'unexpected_target'
   | 'forbidden_event'
   | 'no_system_reducer'
+  | 'no_procedure_handler'
   | 'nothing_to_undo'
   | 'nothing_to_redo';
 

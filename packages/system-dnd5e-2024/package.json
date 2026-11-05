@@ -19,7 +19,8 @@
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "srd:import": "node scripts/import-srd.mjs",
-    "catalog": "node bin/catalog.mjs"
+    "catalog": "node bin/catalog.mjs",
+    "rules": "node bin/rules.mjs"
   },
   "dependencies": {
     "@iron-scribe/dice": "workspace:*",
