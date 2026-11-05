@@ -39,6 +39,13 @@ pnpm --filter @iron-scribe/llm eval -- --url http://127.0.0.1:5001
 The process exits 0 when the server answers, including when the model misses cases.
 It exits 1 when the server cannot be reached.
 
+Advanced run (more cases, `--runs N`, per-category scores, streaming check, raw replies
+saved with `--out file.jsonl`, `--json`, `--fail-under <pct>` exits 2):
+
+```bash
+node packages/llm/bin/eval-advanced.mjs --url http://127.0.0.1:5001 --runs 3 --out eval.jsonl
+```
+
 ## Test rules
 
 - Unit-test adapters with mocked HTTP; do not require a live model in CI.
