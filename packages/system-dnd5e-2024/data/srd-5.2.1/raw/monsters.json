@@ -1,0 +1,927 @@
+[
+  {
+    "name": "Bandit",
+    "size": "Medium or small",
+    "type": "humanoid",
+    "alignment": "neutral",
+    "armor_class": [
+      {
+        "value": 12,
+        "armor": [
+          {
+            "index": "leather-armor",
+            "name": "Leather Armor",
+            "url": "/api/2024/equipment/leather-armor"
+          }
+        ]
+      }
+    ],
+    "hit_points": 11,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 11,
+    "dexterity": 12,
+    "constitution": 12,
+    "intelligence": 10,
+    "wisdom": 10,
+    "charisma": 10,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": "Common, Thieves’ Cant",
+    "challenge_rating": 0.125,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Scimitar",
+        "desc": "Melee Attack Roll: +3, reach 5 ft. Hit: 4 (1d6 + 1) Slashing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "slashing",
+              "name": "Slashing",
+              "url": "/api/2024/damage-types/slashing"
+            },
+            "damage_dice": "1d6+1"
+          }
+        ],
+        "attack_bonus": 3
+      },
+      {
+        "name": "Light Crossbow",
+        "desc": "Ranged Attack Roll: +3, range 80/320 ft. Hit: 5 (1d8 + 1) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d8+1"
+          }
+        ],
+        "attack_bonus": 3
+      }
+    ],
+    "legendary_actions": [],
+    "index": "bandit",
+    "url": "/api/2024/monsters/bandit",
+    "image": "/api/images/monsters/bandit.png",
+    "hit_points_roll": "2d8 + 2",
+    "proficiencies": [],
+    "gear": "Leather Armor, Light Crossbow, Scimitar",
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Cultist",
+    "size": "Medium or small",
+    "type": "humanoid",
+    "alignment": "neutral",
+    "armor_class": [
+      {
+        "value": 12,
+        "armor": [
+          {
+            "index": "leather-armor",
+            "name": "Leather Armor",
+            "url": "/api/2024/equipment/leather-armor"
+          }
+        ]
+      }
+    ],
+    "hit_points": 9,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 11,
+    "dexterity": 12,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "passive_perception": 10
+    },
+    "languages": "Common",
+    "challenge_rating": 0.125,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Ritual Sickle",
+        "desc": "Melee Attack Roll: +3, reach 5 ft. Hit: 3 (1d4 + 1) Slashing damage plus 1 Necrotic damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "slashing",
+              "name": "Slashing",
+              "url": "/api/2024/damage-types/slashing"
+            },
+            "damage_dice": "1d4+1"
+          }
+        ],
+        "attack_bonus": 3
+      }
+    ],
+    "legendary_actions": [],
+    "index": "cultist",
+    "url": "/api/2024/monsters/cultist",
+    "image": "/api/images/monsters/cultist.png",
+    "hit_points_roll": "2d8",
+    "proficiencies": [
+      {
+        "value": 2,
+        "proficiency": {
+          "index": "saving-throw-wis",
+          "name": "Saving Throw: WIS",
+          "url": "/api/2024/proficiencies/saving-throw-wis"
+        }
+      },
+      {
+        "value": 2,
+        "proficiency": {
+          "index": "skill-deception",
+          "name": "Skill: Deception",
+          "url": "/api/2024/proficiencies/skill-deception"
+        }
+      },
+      {
+        "value": 2,
+        "proficiency": {
+          "index": "skill-religion",
+          "name": "Skill: Religion",
+          "url": "/api/2024/proficiencies/skill-religion"
+        }
+      }
+    ],
+    "gear": "Leather Armor, Sickle",
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Giant Rat",
+    "size": "Small",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+      {
+        "value": 13
+      }
+    ],
+    "hit_points": 7,
+    "hit_dice": "2d6",
+    "speed": {
+      "walk": "30 ft.",
+      "climb": "30 ft."
+    },
+    "strength": 7,
+    "dexterity": 16,
+    "constitution": 11,
+    "intelligence": 2,
+    "wisdom": 10,
+    "charisma": 4,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 12
+    },
+    "languages": "None",
+    "challenge_rating": 0.125,
+    "special_abilities": [
+      {
+        "name": "Pack Tactics",
+        "desc": "The rat has Advantage on an attack roll against a creature if at least one of the rat’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Bite",
+        "desc": "Melee Attack Roll: +5, reach 5 feet. Hit: 5 (1d4 + 3) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d4+3"
+          }
+        ],
+        "attack_bonus": 5
+      }
+    ],
+    "legendary_actions": [],
+    "index": "giant-rat",
+    "url": "/api/2024/monsters/giant-rat",
+    "image": "/api/images/monsters/giant-rat.png",
+    "hit_points_roll": "2d6",
+    "proficiencies": [
+      {
+        "value": 5,
+        "proficiency": {
+          "index": "saving-throw-dex",
+          "name": "Saving Throw: DEX",
+          "url": "/api/2024/proficiencies/saving-throw-dex"
+        }
+      },
+      {
+        "value": 2,
+        "proficiency": {
+          "index": "skill-perception",
+          "name": "Skill: Perception",
+          "url": "/api/2024/proficiencies/skill-perception"
+        }
+      }
+    ],
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Goblin Minion",
+    "size": "Small",
+    "type": "fey",
+    "alignment": "chaotic neutral",
+    "armor_class": [
+      {
+        "value": 12
+      }
+    ],
+    "hit_points": 7,
+    "hit_dice": "2d6",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 8,
+    "dexterity": 15,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 8,
+    "charisma": 8,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": "Common, Goblin",
+    "challenge_rating": 0.125,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Dagger",
+        "desc": "Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d4+2"
+          }
+        ],
+        "attack_bonus": 4
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Nimble Escape",
+        "desc": "The goblin takes the Disengage or Hide action."
+      }
+    ],
+    "legendary_actions": [],
+    "index": "goblin-minion",
+    "url": "/api/2024/monsters/goblin-minion",
+    "image": "/api/images/monsters/goblin-minion-NYI.png",
+    "hit_points_roll": "2d6",
+    "proficiencies": [
+      {
+        "value": 6,
+        "proficiency": {
+          "index": "skill-stealth",
+          "name": "Skill: Stealth",
+          "url": "/api/2024/proficiencies/skill-stealth"
+        }
+      }
+    ],
+    "gear": "Daggers (3)",
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Goblin Warrior",
+    "size": "Small",
+    "type": "fey",
+    "alignment": "chaotic neutral",
+    "armor_class": [
+      {
+        "value": 15,
+        "armor": [
+          {
+            "index": "leather-armor",
+            "name": "Leather Armor",
+            "url": "/api/2024/equipment/leather-armor"
+          },
+          {
+            "index": "shield",
+            "name": "Shield",
+            "url": "/api/2024/equipment/shield"
+          }
+        ]
+      }
+    ],
+    "hit_points": 10,
+    "hit_dice": "3d6",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 8,
+    "dexterity": 15,
+    "constitution": 10,
+    "intelligence": 10,
+    "wisdom": 8,
+    "charisma": 8,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": "Common, Goblin",
+    "challenge_rating": 0.25,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Scimitar",
+        "desc": "Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage, plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "slashing",
+              "name": "Slashing",
+              "url": "/api/2024/damage-types/slashing"
+            },
+            "damage_dice": "1d6+2"
+          },
+          {
+            "damage_type": {
+              "index": "slashing",
+              "name": "Slashing",
+              "url": "/api/2024/damage-types/slashing"
+            },
+            "damage_dice": "1d4"
+          }
+        ],
+        "attack_bonus": 4
+      },
+      {
+        "name": "Shortbow",
+        "desc": "Ranged Attack Roll: +4, range 80/320 ft. Hit: 5 (1d6 + 2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d6+2"
+          },
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d4"
+          }
+        ],
+        "attack_bonus": 4
+      }
+    ],
+    "bonus_actions": [
+      {
+        "name": "Nimble Escape",
+        "desc": "The goblin takes the Disengage or Hide action."
+      }
+    ],
+    "legendary_actions": [],
+    "index": "goblin-warrior",
+    "url": "/api/2024/monsters/goblin-warrior",
+    "image": "/api/images/monsters/goblin-warrior-NYI.png",
+    "hit_points_roll": "3d6",
+    "proficiencies": [
+      {
+        "value": 6,
+        "proficiency": {
+          "index": "skill-stealth",
+          "name": "Skill: Stealth",
+          "url": "/api/2024/proficiencies/skill-stealth"
+        }
+      }
+    ],
+    "gear": "Leather Armor, Scimitar, Shield, Shortbow",
+    "proficiency_bonus": 2,
+    "xp": 50
+  },
+  {
+    "name": "Guard",
+    "size": "Medium or small",
+    "type": "humanoid",
+    "alignment": "neutral",
+    "armor_class": [
+      {
+        "value": 16,
+        "armor": [
+          {
+            "index": "chain-shirt",
+            "name": "Chain Shirt",
+            "url": "/api/2024/equipment/chain-shirt"
+          },
+          {
+            "index": "shield",
+            "name": "Shield",
+            "url": "/api/2024/equipment/shield"
+          }
+        ]
+      }
+    ],
+    "hit_points": 11,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 13,
+    "dexterity": 12,
+    "constitution": 12,
+    "intelligence": 10,
+    "wisdom": 11,
+    "charisma": 10,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "passive_perception": 12
+    },
+    "languages": "Common",
+    "challenge_rating": 0.125,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Spear",
+        "desc": "Melee or Ranged Attack Roll: +3, reach 5 ft. or range 20/60 ft. Hit: 4 (1d6 + 1) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d6+1"
+          }
+        ],
+        "attack_bonus": 3
+      }
+    ],
+    "legendary_actions": [],
+    "index": "guard",
+    "url": "/api/2024/monsters/guard",
+    "image": "/api/images/monsters/guard.png",
+    "hit_points_roll": "2d8 + 2",
+    "proficiencies": [
+      {
+        "value": 2,
+        "proficiency": {
+          "index": "skill-perception",
+          "name": "Skill: Perception",
+          "url": "/api/2024/proficiencies/skill-perception"
+        }
+      }
+    ],
+    "gear": "Chain Shirt, Shield, Spear",
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Kobold Warrior",
+    "size": "Small",
+    "type": "dragon",
+    "alignment": "neutral",
+    "armor_class": [
+      {
+        "value": 14
+      }
+    ],
+    "hit_points": 7,
+    "hit_dice": "3d6",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 7,
+    "dexterity": 15,
+    "constitution": 9,
+    "intelligence": 8,
+    "wisdom": 7,
+    "charisma": 8,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 8
+    },
+    "languages": "Common, Draconic",
+    "challenge_rating": 0.125,
+    "special_abilities": [
+      {
+        "name": "Pack Tactics",
+        "desc": "The kobold has Advantage on an attack roll against a creature if at least one of the kobold’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition."
+      },
+      {
+        "name": "Sunlight Sensitivity",
+        "desc": "While in sunlight, the kobold has Disadvantage on ability checks and attack rolls."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Dagger",
+        "desc": "Melee or Ranged Attack Roll: +4, reach 5 ft. or range 20/60 ft. Hit: 4 (1d4 + 2) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d4+2"
+          }
+        ],
+        "attack_bonus": 4
+      }
+    ],
+    "legendary_actions": [],
+    "index": "kobold-warrior",
+    "url": "/api/2024/monsters/kobold-warrior",
+    "image": "/api/images/monsters/kobold-warrior-NYI.png",
+    "hit_points_roll": "3d6 - 3",
+    "proficiencies": [],
+    "gear": "Daggers (3)",
+    "proficiency_bonus": 2,
+    "xp": 25
+  },
+  {
+    "name": "Ogre",
+    "size": "Large",
+    "type": "giant",
+    "alignment": "chaotic evil",
+    "armor_class": [
+      {
+        "value": 11
+      }
+    ],
+    "hit_points": 68,
+    "hit_dice": "8d10",
+    "speed": {
+      "walk": "40 ft."
+    },
+    "strength": 19,
+    "dexterity": 8,
+    "constitution": 16,
+    "intelligence": 5,
+    "wisdom": 7,
+    "charisma": 7,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 8
+    },
+    "languages": "Common, Giant",
+    "challenge_rating": 2,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Greatclub",
+        "desc": "Melee Attack Roll: +6, reach 5 ft. Hit: 13 (2d8 + 4) Bludgeoning damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "bludgeoning",
+              "name": "Bludgeoning",
+              "url": "/api/2024/damage-types/bludgeoning"
+            },
+            "damage_dice": "2d8+4"
+          }
+        ],
+        "attack_bonus": 6
+      },
+      {
+        "name": "Javelin",
+        "desc": "Melee or Ranged Attack Roll: +6, reach 5 ft. or range 30/120 ft. Hit: 11 (2d6 + 4) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "2d6+4"
+          }
+        ],
+        "attack_bonus": 6
+      }
+    ],
+    "legendary_actions": [],
+    "index": "ogre",
+    "url": "/api/2024/monsters/ogre",
+    "image": "/api/images/monsters/ogre.png",
+    "hit_points_roll": "8d10 + 24",
+    "proficiencies": [],
+    "gear": "Greatclub, Javelins (3)",
+    "proficiency_bonus": 2,
+    "xp": 450
+  },
+  {
+    "name": "Skeleton",
+    "size": "Medium",
+    "type": "undead",
+    "alignment": "lawful evil",
+    "armor_class": [
+      {
+        "value": 14
+      }
+    ],
+    "hit_points": 13,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "30 ft."
+    },
+    "strength": 10,
+    "dexterity": 16,
+    "constitution": 15,
+    "intelligence": 6,
+    "wisdom": 8,
+    "charisma": 5,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [
+      "bludgeoning"
+    ],
+    "damage_immunities": [
+      "poison"
+    ],
+    "condition_immunities": [
+      {
+        "index": "exhaustion",
+        "name": "Exhaustion",
+        "url": "/api/2024/conditions/exhaustion"
+      },
+      {
+        "index": "poisoned",
+        "name": "Poisoned",
+        "url": "/api/2024/conditions/poisoned"
+      }
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 9
+    },
+    "languages": "Understands Common plus one other language but can’t speak",
+    "challenge_rating": 0.25,
+    "special_abilities": [],
+    "actions": [
+      {
+        "name": "Shortsword",
+        "desc": "Melee Attack Roll: +5, reach 5 ft. Hit: 6 (1d6 + 3) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d6+3"
+          }
+        ],
+        "attack_bonus": 5
+      },
+      {
+        "name": "Shortbow",
+        "desc": "Ranged Attack Roll: +5, range 80/320 ft. Hit: 6 (1d6 + 3) Piercing damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d6+3"
+          }
+        ],
+        "attack_bonus": 5
+      }
+    ],
+    "legendary_actions": [],
+    "index": "skeleton",
+    "url": "/api/2024/monsters/skeleton",
+    "image": "/api/images/monsters/skeleton.png",
+    "hit_points_roll": "2d8 + 4",
+    "proficiencies": [],
+    "gear": "Shortbow, Shortsword",
+    "proficiency_bonus": 2,
+    "xp": 50
+  },
+  {
+    "name": "Wolf",
+    "size": "Medium",
+    "type": "beast",
+    "alignment": "unaligned",
+    "armor_class": [
+      {
+        "value": 12
+      }
+    ],
+    "hit_points": 11,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "40 ft."
+    },
+    "strength": 14,
+    "dexterity": 15,
+    "constitution": 12,
+    "intelligence": 3,
+    "wisdom": 12,
+    "charisma": 6,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [],
+    "condition_immunities": [],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 15
+    },
+    "languages": "None",
+    "challenge_rating": 0.25,
+    "special_abilities": [
+      {
+        "name": "Pack Tactics",
+        "desc": "The wolf has Advantage on attack rolls against a creature if at least one of the wolf’s allies is within 5 feet of the creature and the ally doesn’t have the Incapacitated condition."
+      }
+    ],
+    "actions": [
+      {
+        "name": "Bite",
+        "desc": "Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Piercing damage. If the target is a Medium or smaller creature, it has the Prone condition.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "piercing",
+              "name": "Piercing",
+              "url": "/api/2024/damage-types/piercing"
+            },
+            "damage_dice": "1d6+2"
+          }
+        ],
+        "attack_bonus": 4
+      }
+    ],
+    "legendary_actions": [],
+    "index": "wolf",
+    "url": "/api/2024/monsters/wolf",
+    "image": "/api/images/monsters/wolf.png",
+    "hit_points_roll": "2d8 + 2",
+    "proficiencies": [
+      {
+        "value": 5,
+        "proficiency": {
+          "index": "skill-perception",
+          "name": "Skill: Perception",
+          "url": "/api/2024/proficiencies/skill-perception"
+        }
+      },
+      {
+        "value": 4,
+        "proficiency": {
+          "index": "skill-stealth",
+          "name": "Skill: Stealth",
+          "url": "/api/2024/proficiencies/skill-stealth"
+        }
+      }
+    ],
+    "proficiency_bonus": 2,
+    "xp": 50
+  },
+  {
+    "name": "Zombie",
+    "size": "Medium",
+    "type": "undead",
+    "alignment": "neutral evil",
+    "armor_class": [
+      {
+        "value": 8
+      }
+    ],
+    "hit_points": 15,
+    "hit_dice": "2d8",
+    "speed": {
+      "walk": "20 ft."
+    },
+    "strength": 13,
+    "dexterity": 6,
+    "constitution": 16,
+    "intelligence": 3,
+    "wisdom": 6,
+    "charisma": 5,
+    "damage_resistances": [],
+    "damage_vulnerabilities": [],
+    "damage_immunities": [
+      "poison"
+    ],
+    "condition_immunities": [
+      {
+        "index": "exhaustion",
+        "name": "Exhaustion",
+        "url": "/api/2024/conditions/exhaustion"
+      },
+      {
+        "index": "poisoned",
+        "name": "Poisoned",
+        "url": "/api/2024/conditions/poisoned"
+      }
+    ],
+    "senses": {
+      "darkvision": "60 ft.",
+      "passive_perception": 8
+    },
+    "languages": "Understands Common plus one other language but can’t speak",
+    "challenge_rating": 0.25,
+    "special_abilities": [
+      {
+        "name": "Undead Fortitude",
+        "desc": "If damage reduces the zombie to 0 Hit Points, it makes a Constitution saving throw (DC 5 plus the damage taken) unless the damage is Radiant or from a Critical Hit. On a successful save, the zombie drops to 1 Hit Point instead.",
+        "dc": {
+          "dc_type": {
+            "index": "con",
+            "name": "CON",
+            "url": "/api/2024/ability-scores/con"
+          },
+          "success_type": "none"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "name": "Slam",
+        "desc": "Melee Attack Roll: +3, reach 5 ft. Hit: 5 (1d8 + 1) Bludgeoning damage.",
+        "damage": [
+          {
+            "damage_type": {
+              "index": "bludgeoning",
+              "name": "Bludgeoning",
+              "url": "/api/2024/damage-types/bludgeoning"
+            },
+            "damage_dice": "1d8+1"
+          }
+        ],
+        "attack_bonus": 3
+      }
+    ],
+    "legendary_actions": [],
+    "index": "zombie",
+    "url": "/api/2024/monsters/zombie",
+    "image": "/api/images/monsters/zombie.png",
+    "hit_points_roll": "2d8 + 6",
+    "proficiencies": [
+      {
+        "value": 0,
+        "proficiency": {
+          "index": "saving-throw-wis",
+          "name": "Saving Throw: WIS",
+          "url": "/api/2024/proficiencies/saving-throw-wis"
+        }
+      }
+    ],
+    "proficiency_bonus": 2,
+    "xp": 50
+  }
+]

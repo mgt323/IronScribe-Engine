@@ -5,7 +5,7 @@
 | 0     | Monorepo, lint, Vitest, AGENTS.md, CI | Done        |
 | 1     | dice                                  | Done        |
 | 2     | engine-core                           | Done        |
-| 3     | SRD import                            | Not started |
+| 3     | SRD import                            | Done        |
 | 4     | D&D rules                             | Not started |
 | 5     | LLM providers + eval                  | Not started |
 | 6     | CLI play                              | Not started |
@@ -39,3 +39,18 @@
   `rng.advanced` only if the RNG moved; replaying events alone rebuilds state
 - One undo step is one commit; undo/redo restore the RNG
 - Tested with a fake rule system (`poke`, `wait`)
+
+## Stage 3 notes
+
+- Raw SRD subset (pinned 5e-database commit) lives in
+  `packages/system-dnd5e-2024/data/srd-5.2.1/raw`; `pnpm --filter
+@iron-scribe/system-dnd5e-2024 srd:import` refreshes it by hand (never in CI)
+- Raw JSON is converted to our own Zod schema when the catalog loads; rules data
+  upstream lacks lives in `overrides.ts` (spell mechanics, Cultist necrotic)
+- Zod 4 is used only inside `system-dnd5e-2024` to validate data; model-facing
+  schemas still belong to Stage 5 (same zod version)
+- Catalog: 11 monsters, 14 weapons, 4 armor (shield is `kind: 'shield'`, adds
+  to AC), 5 spells. `find()` is exact id/name first, then whole-word match
+- `monsterToEntity` copies HP and stores the full stat block in
+  `entity.system.monster`; `readMonsterSnapshot` reads it back
+- Dice strings hold dice only; spell modifiers use `addSpellcastingMod`

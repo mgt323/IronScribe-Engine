@@ -11,16 +11,19 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "data"
   ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run"
+    "test": "vitest run",
+    "srd:import": "node scripts/import-srd.mjs"
   },
   "dependencies": {
     "@iron-scribe/dice": "workspace:*",
-    "@iron-scribe/engine-core": "workspace:*"
+    "@iron-scribe/engine-core": "workspace:*",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
