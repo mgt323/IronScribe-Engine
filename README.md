@@ -10,7 +10,7 @@ Version 1 is theater-of-the-mind and single player.
 
 ## Status
 
-Stages 0-4 (tooling, dice, engine-core, SRD import, D&D rules) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
+Stages 0-5 (tooling, dice, engine-core, SRD import, D&D rules, LLM providers) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
 
 ## License
 
@@ -39,4 +39,13 @@ pnpm check
 pnpm --filter @iron-scribe/dice build
 pnpm roll -- 2d6+3
 pnpm roll -- d20 --adv -m 5 --seed 42
+```
+
+### LLM eval
+
+Build first. The default server is `http://127.0.0.1:5001`.
+
+```bash
+pnpm --filter @iron-scribe/llm build
+pnpm --filter @iron-scribe/llm eval -- --url http://127.0.0.1:5001
 ```
