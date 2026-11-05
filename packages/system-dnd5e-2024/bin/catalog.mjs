@@ -65,10 +65,16 @@ const dragon = get(catalog.monsters, 'adult-red-dragon');
 const casting = dragon.actions.find((a) => a.name === 'Spellcasting');
 check(
   'adult red dragon spellcasting and lair XP',
-  casting?.spellcasting?.dc === 20 && dragon.xpInLair === 20000 && dragon.legendaryActions.length === 3,
+  casting?.spellcasting?.dc === 20 &&
+    dragon.xpInLair === 20000 &&
+    dragon.legendaryActions.length === 3,
   '',
 );
-check('vampire mist has no actions', get(catalog.monsters, 'vampire-mist').actions.length === 0, '');
+check(
+  'vampire mist has no actions',
+  get(catalog.monsters, 'vampire-mist').actions.length === 0,
+  '',
+);
 check(
   'rakshasa vulnerability stays qualified',
   get(catalog.monsters, 'rakshasa').vulnerabilities.length === 0 &&
