@@ -10,7 +10,7 @@ Version 1 is theater-of-the-mind and single player.
 
 ## Status
 
-Stages 0-2 (tooling, dice, engine-core) are done. See [docs/status.md](docs/status.md).
+Stages 0-3 (tooling, dice, engine-core, SRD import) are done. See [docs/status.md](docs/status.md).
 
 ## License
 

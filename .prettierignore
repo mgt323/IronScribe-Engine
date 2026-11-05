@@ -3,3 +3,4 @@ dist
 coverage
 node_modules
 *.gguf
+packages/system-dnd5e-2024/data/srd-5.2.1/raw
