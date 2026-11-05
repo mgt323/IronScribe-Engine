@@ -1,3 +1,5 @@
+import type { DamageType } from './schema.js';
+import type { Monster } from './schema-monster.js';
 import type { Spell } from './schema-spell.js';
 
 /**
@@ -61,9 +63,59 @@ export const SPELL_MECHANICS: Readonly<Record<string, SpellMechanics>> = {
   },
 };
 
-/** SRD 5.2.1, Monsters: Cultist, Ritual Sickle ("plus 1 Necrotic damage"); upstream omits it. */
-export const EXTRA_MONSTER_DAMAGE: Readonly<
-  Record<string, { action: string; dice: string; type: 'necrotic' }>
-> = {
-  cultist: { action: 'ritual-sickle', dice: '1', type: 'necrotic' },
+/** Flat damage (no dice) that upstream's `damage` array leaves out. Each is printed in the stat block. */
+type ExtraDamage = { action: string; dice: string; type: DamageType };
+const flat = (action: string, type: DamageType): ExtraDamage => ({ action, dice: '1', type });
+
+/**
+ * SRD 5.2.1, Monsters: each listed attack prints this damage in its "Hit:" line, but the
+ * upstream data omits it ("1 Piercing damage" with no dice, or the Cultist's "plus 1 Necrotic").
+ */
+export const EXTRA_MONSTER_DAMAGE: Readonly<Record<string, readonly ExtraDamage[]>> = {
+  'awakened-shrub': [flat('rake', 'slashing')],
+  badger: [flat('bite', 'piercing')],
+  bat: [flat('bite', 'piercing')],
+  cat: [flat('scratch', 'slashing')],
+  crab: [flat('claw', 'bludgeoning')],
+  cultist: [flat('ritual-sickle', 'necrotic')],
+  'flying-snake': [flat('bite', 'piercing')],
+  frog: [flat('bite', 'piercing')],
+  'giant-fire-beetle': [flat('bite', 'fire')],
+  hawk: [flat('talons', 'slashing')],
+  homunculus: [flat('bite', 'piercing')],
+  lizard: [flat('bite', 'piercing')],
+  owl: [flat('talons', 'slashing')],
+  piranha: [flat('bite', 'piercing')],
+  rat: [flat('bite', 'piercing')],
+  raven: [flat('beak', 'piercing')],
+  scorpion: [flat('sting', 'piercing')],
+  spider: [flat('bite', 'piercing')],
+  sprite: [flat('enchanting-bow', 'piercing')],
+  weasel: [flat('bite', 'piercing')],
 };
+
+/**
+ * Attacks whose printed damage the data cannot express yet. Goat, Ram: "1 Bludgeoning damage, or
+ * 2 (1d4) ... if the goat moved 20+ feet"; upstream lists only the 1d4 as ordinary damage.
+ */
+export const UNRESOLVED_MONSTER_DAMAGE: ReadonlySet<string> = new Set(['goat/ram']);
+
+export function withExtraDamage(m: Monster): Monster {
+  const extras = EXTRA_MONSTER_DAMAGE[m.id];
+  if (!extras) return m;
+  return {
+    ...m,
+    actions: m.actions.map((a) => {
+      const add = extras.filter((e) => e.action === a.id);
+      return add.length === 0
+        ? a
+        : {
+            ...a,
+            damage: [
+              ...a.damage,
+              ...add.map((e) => ({ dice: e.dice, type: e.type, condition: null })),
+            ],
+          };
+    }),
+  };
+}

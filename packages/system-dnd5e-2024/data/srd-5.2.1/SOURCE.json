@@ -1,34 +1,134 @@
 {
-  "upstream": "https://github.com/5e-bits/5e-database",
-  "path": "src/2024/en",
-  "commit": "a6212beb4b278917c2cff41c2b04c4ef4f3e0d6f",
+  "upstream": "https://github.com/5e-bits/5e-srd-api",
+  "path": "packages/5e-database/src/2024/en",
+  "commit": "6dfaa6e2f1aefc466fb45b9a64e4dd11a537ca53",
   "license": "MIT (data repo); content is SRD 5.2.1, CC-BY-4.0",
   "fetched": "2026-11-05",
   "files": [
     {
-      "upstream": "5e-SRD-Monsters.json",
-      "raw": "monsters.json",
-      "entries": 11
+      "upstream": "5e-SRD-Ability-Scores.json",
+      "raw": "ability-scores.json",
+      "entries": 6
+    },
+    {
+      "upstream": "5e-SRD-Alignments.json",
+      "raw": "alignments.json",
+      "entries": 10
+    },
+    {
+      "upstream": "5e-SRD-Backgrounds.json",
+      "raw": "backgrounds.json",
+      "entries": 4
+    },
+    {
+      "upstream": "5e-SRD-Classes.json",
+      "raw": "classes.json",
+      "entries": 12
+    },
+    {
+      "upstream": "5e-SRD-Conditions.json",
+      "raw": "conditions.json",
+      "entries": 15
+    },
+    {
+      "upstream": "5e-SRD-Damage-Types.json",
+      "raw": "damage-types.json",
+      "entries": 13
+    },
+    {
+      "upstream": "5e-SRD-Equipment-Categories.json",
+      "raw": "equipment-categories.json",
+      "entries": 30
     },
     {
       "upstream": "5e-SRD-Equipment.json",
       "raw": "equipment.json",
+      "entries": 182
+    },
+    {
+      "upstream": "5e-SRD-Feats.json",
+      "raw": "feats.json",
+      "entries": 17
+    },
+    {
+      "upstream": "5e-SRD-Features.json",
+      "raw": "features.json",
+      "entries": 232
+    },
+    {
+      "upstream": "5e-SRD-Languages.json",
+      "raw": "languages.json",
+      "entries": 19
+    },
+    {
+      "upstream": "5e-SRD-Levels.json",
+      "raw": "levels.json",
+      "entries": 287
+    },
+    {
+      "upstream": "5e-SRD-Magic-Items.json",
+      "raw": "magic-items.json",
+      "entries": 262
+    },
+    {
+      "upstream": "5e-SRD-Magic-Schools.json",
+      "raw": "magic-schools.json",
+      "entries": 8
+    },
+    {
+      "upstream": "5e-SRD-Monsters.json",
+      "raw": "monsters.json",
+      "entries": 341
+    },
+    {
+      "upstream": "5e-SRD-Poisons.json",
+      "raw": "poisons.json",
+      "entries": 14
+    },
+    {
+      "upstream": "5e-SRD-Proficiencies.json",
+      "raw": "proficiencies.json",
+      "entries": 74
+    },
+    {
+      "upstream": "5e-SRD-Skills.json",
+      "raw": "skills.json",
       "entries": 18
+    },
+    {
+      "upstream": "5e-SRD-Species.json",
+      "raw": "species.json",
+      "entries": 9
     },
     {
       "upstream": "5e-SRD-Spells.json",
       "raw": "spells.json",
-      "entries": 5
+      "entries": 339
     },
     {
-      "upstream": "5e-SRD-Weapon-Properties.json",
-      "raw": "weapon-properties.json",
-      "entries": "all"
+      "upstream": "5e-SRD-Subclasses.json",
+      "raw": "subclasses.json",
+      "entries": 12
+    },
+    {
+      "upstream": "5e-SRD-Subspecies.json",
+      "raw": "subspecies.json",
+      "entries": 24
+    },
+    {
+      "upstream": "5e-SRD-Traits.json",
+      "raw": "traits.json",
+      "entries": 67
     },
     {
       "upstream": "5e-SRD-Weapon-Mastery-Properties.json",
       "raw": "weapon-mastery-properties.json",
-      "entries": "all"
+      "entries": 8
+    },
+    {
+      "upstream": "5e-SRD-Weapon-Properties.json",
+      "raw": "weapon-properties.json",
+      "entries": 10
     }
   ]
 }

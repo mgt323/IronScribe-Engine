@@ -34,6 +34,10 @@ The orchestrator knows `RuleSystem`, not a concrete D&D package. One
 - Write **failing tests from SRD examples**, then implement until they pass.
 - Each package has a short `AGENTS.md` (purpose, public interface, test rules).
 - Keep `docs/status.md` current.
+- Copied upstream code (`packages/system-dnd5e-2024/src/catalog/upstream/`) and
+  raw SRD data (`.../data/srd-5.2.1/raw/`) are written only by `srd:import`. They
+  are exempt from style rules (Prettier, the 300-line limit, lint style rules)
+  but not from correctness checks (typecheck, strict schema validation in tests).
 - Zod schemas (when added) are validation rules, JSON Schema for the model,
   and UI types. Keep model schemas flat: enums, strings, booleans, integers,
   `additionalProperties: false`, every field required.
