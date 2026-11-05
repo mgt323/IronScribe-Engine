@@ -33,7 +33,7 @@ export function buildIntentPrompt(
       'Present:',
       presentLines(state),
       '',
-      'Report a catalog spawn (query, count 1-10, attitude) only for creatures that newly appear and are not already listed under Present. If the player refers to someone already present, spawn nothing (spawnQuery, spawnCount, spawnAttitude all null) and never use an id from Present as a query. For a new group, count is how many appear ("two goblins" is 2). a check (ability id and skill id, or null), and whether the actor also wants one sheet action. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat such as sneaking (Stealth). Do not choose aliases or a DC.',
+      'Report a catalog spawn (query, count 1-10, attitude) for every creature or person that newly appears and is not already listed under Present, friendly and neutral ones included (a guard, a merchant, a dog): choose the attitude that fits. If the player refers to someone already present, spawn nothing (spawnQuery, spawnCount, spawnAttitude all null) and never use an id from Present as a query. For a new group, count is how many appear ("two goblins" is 2). a check (ability id and skill id, or null), and whether the actor also wants one sheet action. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat such as sneaking (Stealth). Do not choose aliases or a DC.',
       '',
       `Player: ${playerInput}`,
     ].join('\n'),

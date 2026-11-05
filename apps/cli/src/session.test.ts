@@ -74,7 +74,6 @@ describe('cli play', () => {
 
     const llm = createScriptedLlmClient([
       { text: intent({ ...idle, wantsAction: true }) },
-      { text: intent({ kind: 'none', actionAlias: null, targetAlias: null }) },
       {
         text: intent({
           ...idle,
@@ -132,7 +131,9 @@ describe('cli play', () => {
     await handleCliLine(session, 'I stab the goblin.', out);
     const missed = session.orchestrator.logs.at(-1);
     expect(jsonField(missed?.rawResponses[0], 'wantsAction')).toBe(true);
-    expect(jsonField(missed?.rawResponses[1], 'kind')).toBe('none');
+    // No target in the scene: the model is not asked to choose an action.
+    expect(missed?.rawResponses).toHaveLength(1);
+    expect(missed?.status).toBe('none');
     expect(session.orchestrator.canUndoTurn).toBe(false);
 
     const clarifyOut = writer();

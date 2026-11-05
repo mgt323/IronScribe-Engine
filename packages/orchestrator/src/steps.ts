@@ -126,7 +126,9 @@ export async function actionFrom(
 ): Promise<Fact[]> {
   if (!intent.wantsAction) return [];
   const menu = ctx.engine.menu(ctx.actorId);
-  if (menu.actions.length === 0) return [];
+  // Without a target no attack can validate, and the model has nothing legal to pick.
+  const usable = menu.actions.filter((action) => !action.needsTarget || menu.targets.length > 0);
+  if (usable.length === 0) return [];
   const prompt = buildDecisionPrompt(menu, input);
   prompts.push(prompt);
   const result = await ctx.llm.generateObject({

@@ -96,7 +96,8 @@ Done in one chat by explicit choice, an exception to one stage per chat.
 - Theater of the mind: melee is within 5 feet. Conditional defenses are noted
   and not applied. Monster initiative is Dexterity only
 - Deferred to stage 7: Multiattack, save actions, spells on the menu, NPC
-  action choice, turn advancement, death saves, exhaustion level 6 death
+  action choice, turn advancement, death saves, exhaustion level 6 death,
+  default variant for generic spawn names (see Stage 6 known gap)
 
 ## Stage 5 notes
 
@@ -133,6 +134,16 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   Narration runs after that history entry; a broken stream keeps partial text
 - Spawn count is 1..10. Ambiguous catalog matches are capped at 10. `goblin`
   and `goblins` stay the three SRD goblins, including Goblin Boss
+- Known gap: a generic plural ("two goblins") makes the GM ask which variant
+  (warrior, minion, boss). A real game must not ask. Accepted for now. Planned
+  for Stage 7: the engine picks a default variant for a generic name (a "default
+  variant" field in catalog overrides) and asks only when the player names a
+  variant or role. Encounter definitions from a GM or scene (Stage 9) would
+  replace player-driven spawning. The answer keeps the original count, attitude
+  and intent (`spawnCount` survives the clarify turn)
+- Combat gaps (Stage 7): enemies are passive. Initiative opens before the first
+  targeted action (`RuleSystem.encounterStart`), but nothing advances turns or
+  picks monster actions. Surprise from a Stealth success is not modelled
 - The CLI hero is a fixed SRD 5.2.1 Level 1 Rogue (d8, 10 HP, proficiency +2,
   DEX and INT saves, four Rogue skills, Expertise in two). The model may only
   suggest a name and a backstory. The hero is spawned before the orchestrator,

@@ -14,6 +14,8 @@ state except by calling the engine.
 - `runTurn(input)` — intent, then spawn, check, and a decision from the menu
   rebuilt after those commits. Narration is last
 - `runSpawn`, `runAction`, `runProcedureTurn` share that undo history
+- No decision call when no menu action is usable (every action needs a target
+  and none is present): the turn ends as `none`
 - `undoTurn` / `redoTurn` each call `engine.restore` once for the whole turn.
   Clarify, none, and a failed object call do not push history. A failed object
   call restores the pre-turn snapshot and does not leave those commits on the
