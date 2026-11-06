@@ -1,4 +1,4 @@
-import type { ActionMenu, EntityId, Fact, GameState } from '@iron-scribe/engine-core';
+import type { ActionMenu, EntityId, Fact, GameState, MenuTarget } from '@iron-scribe/engine-core';
 import type { StructuredPrompt } from '@iron-scribe/llm';
 
 /** Stable first message so a prompt cache can reuse it. */
@@ -33,7 +33,7 @@ export function buildIntentPrompt(
       'Present:',
       presentLines(state),
       '',
-      'Report a catalog spawn (query, count 1-10, attitude) for every creature or person that newly appears and is not already listed under Present, friendly and neutral ones included (a guard, a merchant, a dog): choose the attitude that fits. If the player refers to someone already present, spawn nothing (spawnQuery, spawnCount, spawnAttitude all null) and never use an id from Present as a query. For a new group, count is how many appear ("two goblins" is 2). a check (ability id and skill id, or null), and whether the actor also wants one sheet action. A stance or preparation ("I prepare to fight", "I ready my dagger", "I grip my weapon") is not an action: set wantsAction to false unless the player actually strikes, shoots, or otherwise uses a weapon now. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat such as sneaking (Stealth). Do not choose aliases or a DC.',
+      'Report, in this order: (1) spawnIsNew: true only if the sentence introduces creatures or people who are NOT already listed under Present (a goblin, a guard, a merchant, a dog); false if the player talks about, attacks, or ambushes someone who is already listed. "a goblin" while a goblin is listed means that goblin: false. Compare with Present before you answer. (2) A catalog spawn (spawnQuery, spawnCount 1-10, spawnAttitude: friendly, neutral or hostile, whichever fits), or all three null when spawnIsNew is false or nobody new appears. Never use an id from Present as a query. For a new group, count is how many appear ("two goblins" is 2). (3) A check (ability id and skill id, or null) and whether the actor also wants one sheet action. A stance or preparation ("I prepare to fight", "I ready my dagger", "I grip my weapon") is not an action: set wantsAction to false unless the player actually strikes, shoots, or otherwise uses a weapon now. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat. Sneaking, hiding, or creeping up before a strike is that feat: set checkAbility dex and checkSkill stealth, and still set wantsAction true for the strike. Do not choose aliases or a DC.',
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
@@ -41,7 +41,11 @@ export function buildIntentPrompt(
 }
 
 /** The menu was built after spawn, so new creatures already have target aliases. */
-export function buildDecisionPrompt(menu: ActionMenu, playerInput: string): StructuredPrompt {
+export function buildDecisionPrompt(
+  menu: ActionMenu,
+  playerInput: string,
+  lastTarget?: MenuTarget,
+): StructuredPrompt {
   const actions =
     menu.actions.length === 0
       ? '(none)'
@@ -62,6 +66,11 @@ export function buildDecisionPrompt(menu: ActionMenu, playerInput: string): Stru
       targets,
       '',
       'Choose one legal alias. Use kind "none" and null aliases when nothing legal matches. Do not invent a target.',
+      'An action that needs a target must name one (targetAlias is never null for it). If the player names no target or says "again", use ' +
+        (lastTarget
+          ? `${lastTarget.alias} (${lastTarget.label}), the last target`
+          : 'T1, the first target') +
+        '.',
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
@@ -74,7 +83,9 @@ export function buildNarrationPrompt(
   state: GameState,
   actorId: EntityId,
 ): StructuredPrompt {
-  const lines = facts.map((fact) => `- ${fact.text}`);
+  const lines = facts.map((fact) =>
+    fact.key === 'initiative' ? `- Turn order, not an event: ${fact.text}` : `- ${fact.text}`,
+  );
   const names = state.spawnOrder
     .filter((id) => id !== actorId && state.entities[id])
     .map((id) => `${id} = ${state.entities[id]?.name ?? id}`);
@@ -86,8 +97,27 @@ export function buildNarrationPrompt(
       ...(names.length > 0 ? names : ['(none)']),
       'Facts:',
       ...lines,
+      ...outcomeLines(facts),
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
   );
+}
+
+/** Plain-language outcome so a terse roll line cannot be read as the opposite. */
+function outcomeLines(facts: readonly Fact[]): string[] {
+  const out: string[] = [];
+  for (const fact of facts) {
+    if (fact.key !== 'attack') continue;
+    if (/\bmiss\b/i.test(fact.text)) {
+      out.push(
+        'Outcome: the attack MISSES. The blow does not land. Do not describe a hit or a wound.',
+      );
+    } else {
+      out.push('Outcome: the attack HITS. The blow lands.');
+    }
+  }
+  const hurt = facts.some((fact) => fact.key === 'damage' || fact.key === 'hp');
+  if (!hurt) out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
+  return out;
 }

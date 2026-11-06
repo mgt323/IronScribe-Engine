@@ -24,6 +24,7 @@ import {
 
 const intent = (value: Record<string, unknown>) => JSON.stringify(value);
 const idle = {
+  spawnIsNew: true,
   spawnQuery: null,
   spawnCount: null,
   spawnAttitude: null,

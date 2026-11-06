@@ -18,6 +18,7 @@ const menu: ActionMenu = {
 };
 
 const intent = {
+  spawnIsNew: true,
   spawnQuery: null,
   spawnCount: null,
   spawnAttitude: null,

@@ -19,9 +19,12 @@ a name and a backstory. It does not draft scores, hit points, or gear.
 - `bin/play.mjs` (`pnpm play`) reads `--api-key` or `GEMINI_API_KEY` /
   `GOOGLE_API_KEY` / `OPENAI_API_KEY` and passes the key only to the adapter
 
-- `bin/eval-play.mjs` is a live eval (not run in CI): 52 cases against a real
-  model and the real D&D rules, in six categories (spawn, clarify, action, check,
-  narration, command), positive and negative. Cases live in `eval-play-*cases.mjs`.
+- `bin/eval-play.mjs` is a live eval (not run in CI): 53 cases against a real
+  model and the real D&D rules, in seven categories (spawn, clarify, action, check,
+  narration, command, e2e), positive and negative. Cases live in `eval-play-*cases.mjs`. `e2e-three-encounters` is one long
+  session: friendly, neutral and hostile creatures, a target shift, a target
+  going down (engine setup step, then real attacks), an attack on the fallen
+  target (negative), and a scene shift to a new fight.
   Flags: `--only`, `--kind`, `--runs`, `--seed`, `--out`, `--json`, `--list`,
   `--fail-under` (exit 2). A case with `known:` is a documented gap and is left
   out of the pass rate.

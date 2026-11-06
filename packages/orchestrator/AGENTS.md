@@ -14,16 +14,23 @@ state except by calling the engine.
 - `runTurn(input)` — intent, then spawn, check, and a decision from the menu
   rebuilt after those commits. Narration is last
 - `runSpawn`, `runAction`, `runProcedureTurn` share that undo history
+- The decision prompt names the last target (or T1) as the default when the
+  player names none or says "again". The schema still rejects a null target for
+  a targeted action
 - No decision call when no menu action is usable (every action needs a target
   and none is present): the turn ends as `none`
 - `undoTurn` / `redoTurn` each call `engine.restore` once for the whole turn.
   Clarify, none, and a failed object call do not push history. A failed object
   call restores the pre-turn snapshot and does not leave those commits on the
   engine redo stack
+- The narration prompt adds plain `Outcome:` lines (an `attack` fact with "miss"
+  is a MISS, otherwise a HIT; no `damage`/`hp` fact means nobody is wounded) and
+  labels `initiative` facts as turn order, so a terse roll line cannot be narrated
+  as its opposite
 - Narration is recorded after the history entry. A stream that throws keeps
   the partial text and sets `narrationError`. The mechanics stay committed
 - `buildIntentSchema` / `buildDecisionSchema` are flat. An empty alias list is
-  `z.null()`, never `z.enum([])`. Intent has no aliases and no DC
+  `z.null()`, never `z.enum([])`. Intent has no aliases and no DC. `spawnIsNew` is required and comes first: when it is false the spawn fields are ignored, so "a goblin" for one already present spawns nothing
 - Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules

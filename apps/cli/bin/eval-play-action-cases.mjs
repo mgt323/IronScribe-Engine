@@ -57,6 +57,29 @@ export const ACTION_CASES = [
       ),
   },
   {
+    id: 'attack-again-without-target',
+    category: 'action',
+    steps: ['/spawn wolf 3', 'I stab a wolf.', 'I attack with a dagger again.'],
+    check: (ctx) =>
+      rules(
+        [count(ctx, 'attack') === 2, `expected 2 attacks, got ${count(ctx, 'attack')}`],
+        [
+          requests(ctx)[0]?.targetAlias === requests(ctx)[1]?.targetAlias,
+          'did not reuse the last target',
+        ],
+      ),
+  },
+  {
+    id: 'attack-no-named-target',
+    category: 'action',
+    steps: ['/spawn wolf 3', 'I attack with my dagger.'],
+    check: (ctx) =>
+      rules(
+        [count(ctx, 'attack') === 1, 'expected one attack'],
+        [requests(ctx)[0]?.targetAlias !== null, 'no target'],
+      ),
+  },
+  {
     id: 'attack-initiative-first',
     category: 'action',
     steps: ['/spawn goblin-warrior', 'I stab the goblin.'],
@@ -234,6 +257,23 @@ export const ACTION_CASES = [
         [SECOND_PERSON.test(lastNarration(ctx)), 'not in second person'],
         [!REASONING_LEAK.test(lastNarration(ctx)), 'reasoning tags leaked'],
       ),
+  },
+  {
+    id: 'narration-matches-roll',
+    category: 'narration',
+    steps: ['/spawn wolf', 'I stab the wolf with my dagger.'],
+    check: (ctx) => {
+      const text = lastNarration(ctx);
+      const hit = facts(ctx).some((f) => f.key === 'attack' && /hit$/.test(f.text));
+      const claimsHit =
+        /finds its mark|draws blood|wound|bleed|sinks|bites? deep|strikes true|lands/i;
+      const claimsMiss = /miss|harmless|dodge|parr|whiff|glanc|skid|fails to/i;
+      return rules(
+        [text.length > 0, 'no narration'],
+        [hit || !claimsHit.test(text), `says hit on a miss: ${text.slice(0, 100)}`],
+        [!hit || !claimsMiss.test(text), `says miss on a hit: ${text.slice(0, 100)}`],
+      );
+    },
   },
   {
     id: 'narration-sneak',

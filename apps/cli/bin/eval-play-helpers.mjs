@@ -40,3 +40,20 @@ export function rules(...pairs) {
 export const NARRATION_LEAKS = /goblin_warrior_\d|[a-z]+_\d+\b|\bDC\b|\bAC\b|hit points|\bd20\b/i;
 export const SECOND_PERSON = /\byou(r|rs|rself)?\b/i;
 export const REASONING_LEAK = /<think>|<\/think>|<\|channel\|>/i;
+
+/**
+ * Every player attack in order: which creature it aimed at and with what.
+ * Aliases are per turn, so each is resolved against the menu the model saw.
+ */
+export const aimed = (ctx) =>
+  ctx.turns.flatMap((turn, index) =>
+    turn.kind !== 'say'
+      ? []
+      : turn.result.commits.flatMap((c) => {
+          if (!c.request?.targetAlias) return [];
+          const target = turn.menu.targets.find((t) => t.alias === c.request.targetAlias);
+          return [
+            { turn: index, entityId: target?.entityId ?? null, actionAlias: c.request.actionAlias },
+          ];
+        }),
+  );

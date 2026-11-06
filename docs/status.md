@@ -152,6 +152,16 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   work and is not implemented now. Until then `encounterStart` rolls initiative
   before the first targeted attack when a hostile is present, with nobody
   surprised
+- Stage 7 gap, scene shift: nothing emits `entity.presenceSet`, so creatures never
+  leave. After the player moves on, the earlier guard, cultist and fallen
+  creatures stay present, and no new initiative is rolled for the next fight
+  because `state.system.encounter` already exists. Needs a scene or location
+  concept that sets presence and ends or restarts the encounter. The eval case
+  `e2e-three-encounters` only checks what exists today: a new hostile appears
+  and becomes the target
+- Intent has a required `spawnIsNew` flag. The model once spawned a third
+  goblin for "ambush a goblin" with two already present; `spawnFrom` now ignores
+  the spawn when the flag is false. Eval case `no-respawn-present-pair`
 - Intent prompt: a stance or preparation ("I prepare to fight", "I ready my
   dagger") is not an action, so `wantsAction` stays false. Eval case
   `no-attack-on-stance` covers it

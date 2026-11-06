@@ -25,6 +25,7 @@ import { loadCatalog } from '@iron-scribe/system-dnd5e-2024';
 
 import { createCliSession, defaultAdventurerSheet, handleCliLine } from '../dist/index.js';
 import { COMMAND_CASES } from './eval-play-command-cases.mjs';
+import { E2E_CASES } from './eval-play-e2e-cases.mjs';
 import { ACTION_CASES } from './eval-play-action-cases.mjs';
 import { SPAWN_CASES } from './eval-play-cases.mjs';
 import { report } from './eval-play-report.mjs';
@@ -36,7 +37,7 @@ const HELP = `Usage: node apps/cli/bin/eval-play.mjs [options]
   --schema-mode <m>    json_schema (default) | json_object
   --api-key <key>      Gemini key (or GEMINI_API_KEY / GOOGLE_API_KEY)
   --only <text>        cases whose id or category contains <text>
-                       categories: spawn clarify action check narration command
+                       categories: spawn clarify action check narration command e2e
   --kind <k>           positive | negative
   --runs <n>           repeat every case n times (default 1)
   --seed <value>       base RNG seed (default: eval; run n uses <seed>-<n>)
@@ -119,7 +120,7 @@ const unreachable = (e) =>
 const kindOf = (c) => c.kind ?? 'positive';
 
 function selectCases(o) {
-  let cases = [...SPAWN_CASES, ...ACTION_CASES, ...COMMAND_CASES];
+  let cases = [...SPAWN_CASES, ...ACTION_CASES, ...COMMAND_CASES, ...E2E_CASES];
   if (o.only) cases = cases.filter((c) => c.id.includes(o.only) || c.category.includes(o.only));
   if (o.kind) cases = cases.filter((c) => kindOf(c) === o.kind);
   return cases;
@@ -154,22 +155,29 @@ async function runCase(c, o, client, catalog, run) {
     catalog,
   });
   const ctx = { session, turns: [] };
+  /** One player line. Slash commands skip the model; free text records the menu it saw. */
+  ctx.send = async (line) => {
+    const at = Date.now();
+    if (line.startsWith('/')) {
+      let output = '';
+      await handleCliLine(session, line, { write: (t) => (output += t) });
+      ctx.turns.push({ input: line, kind: 'cmd', output, ms: Date.now() - at });
+      return;
+    }
+    const menu = session.orchestrator.engine.menu(session.actorId);
+    const result = await session.orchestrator.runTurn(line, {
+      signal: AbortSignal.timeout(o.timeoutMs),
+    });
+    ctx.turns.push({ input: line, kind: 'say', result, menu, ms: Date.now() - at });
+  };
   const started = Date.now();
   let error = null;
   let schemaError = false;
   try {
-    for (const line of c.steps) {
-      const at = Date.now();
-      if (line.startsWith('/')) {
-        let output = '';
-        await handleCliLine(session, line, { write: (t) => (output += t) });
-        ctx.turns.push({ input: line, kind: 'cmd', output, ms: Date.now() - at });
-      } else {
-        const result = await session.orchestrator.runTurn(line, {
-          signal: AbortSignal.timeout(o.timeoutMs),
-        });
-        ctx.turns.push({ input: line, kind: 'say', result, ms: Date.now() - at });
-      }
+    // A step is a player line, or a function (ctx) for setup and loops.
+    for (const step of c.steps) {
+      if (typeof step === 'function') await step(ctx);
+      else await ctx.send(step);
     }
   } catch (e) {
     schemaError = e instanceof LlmError;

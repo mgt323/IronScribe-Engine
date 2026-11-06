@@ -17,6 +17,8 @@ export interface StepContext {
   readonly system: RuleSystem;
   readonly llm: LlmClient;
   readonly actorId: EntityId;
+  /** The target of the actor's last targeted action, so "again" has a referent. */
+  readonly memory: { lastTargetId: EntityId | null };
 }
 
 type Unmatched = Exclude<SpawnResolution, { status: 'matched' }>;
@@ -67,6 +69,8 @@ export function spawnFrom(
   clarification: TurnClarification | null;
 } {
   if (intent.spawnQuery === null) return { facts: [], clarification: null };
+  // The player refers to creatures already in the scene, so nothing arrives.
+  if (!intent.spawnIsNew) return { facts: [], clarification: null };
   // The model named someone already in the scene (an entity id), not a new creature.
   if (ctx.engine.state.entities[intent.spawnQuery] !== undefined) {
     return { facts: [], clarification: null };
@@ -129,7 +133,8 @@ export async function actionFrom(
   // Without a target no attack can validate, and the model has nothing legal to pick.
   const usable = menu.actions.filter((action) => !action.needsTarget || menu.targets.length > 0);
   if (usable.length === 0) return [];
-  const prompt = buildDecisionPrompt(menu, input);
+  const last = menu.targets.find((target) => target.entityId === ctx.memory.lastTargetId);
+  const prompt = buildDecisionPrompt(menu, input, last);
   prompts.push(prompt);
   const result = await ctx.llm.generateObject({
     name: 'decision',
@@ -141,11 +146,13 @@ export async function actionFrom(
   if (result.data.kind === 'none' || result.data.actionAlias === null) return [];
   const opening =
     result.data.targetAlias === null ? [] : openEncounter(ctx.engine, ctx.system, ctx.actorId);
+  const aimed = menu.targets.find((target) => target.alias === result.data.targetAlias);
   const commit = ctx.engine.perform({
     actorId: ctx.actorId,
     actionAlias: result.data.actionAlias,
     targetAlias: result.data.targetAlias,
   });
+  if (aimed) ctx.memory.lastTargetId = aimed.entityId;
   return [...opening, ...commit.facts];
 }
 

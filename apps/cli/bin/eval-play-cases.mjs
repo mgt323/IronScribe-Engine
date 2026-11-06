@@ -128,6 +128,23 @@ export const SPAWN_CASES = [
       ),
   },
   {
+    id: 'no-respawn-present-pair',
+    kind: 'negative',
+    category: 'spawn',
+    steps: [
+      '/spawn goblin-warrior 2',
+      'I want to ambush a goblin closer to me and attack with a dagger.',
+    ],
+    check: (ctx) =>
+      rules(
+        [
+          monsters(ctx, 'goblin-warrior').length === 2,
+          `goblins: ${monsters(ctx, 'goblin-warrior').length}`,
+        ],
+        [!clarified(ctx).length, 'asked which goblin about one already present'],
+      ),
+  },
+  {
     id: 'unknown-monster',
     kind: 'negative',
     category: 'spawn',

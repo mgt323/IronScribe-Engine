@@ -7,6 +7,7 @@ import { createOrchestrator } from './orchestrator.js';
 
 const intent = (value: Record<string, unknown>) => JSON.stringify(value);
 const idle = {
+  spawnIsNew: true,
   spawnQuery: null,
   spawnCount: null,
   spawnAttitude: null,
@@ -173,6 +174,26 @@ describe('turn history', () => {
     const result = await orchestrator.runTurn('I look at myself.');
     expect(result.status).toBe('none');
     expect(Object.keys(engine.state.entities)).toEqual(['hero']);
+  });
+
+  it('ignores a spawn when the player refers to someone already present', async () => {
+    const { engine, orchestrator } = scene([
+      { text: intent({ ...idle, spawnQuery: 'rat', spawnCount: 1, spawnAttitude: 'hostile' }) },
+      { text: 'A rat.' },
+      {
+        text: intent({
+          ...idle,
+          spawnIsNew: false,
+          spawnQuery: 'rat',
+          spawnCount: 1,
+          spawnAttitude: 'hostile',
+        }),
+      },
+    ]);
+    await orchestrator.runTurn('A rat scurries in.');
+    const again = await orchestrator.runTurn('I stalk the rat.');
+    expect(again.status).toBe('none');
+    expect(Object.keys(engine.state.entities)).toEqual(['hero', 'rat_1']);
   });
 
   it('drops a bare ability check beside an action', async () => {

@@ -4,6 +4,8 @@ import { z } from 'zod';
 const ATTITUDES = ['hostile', 'neutral', 'friendly'] as const;
 
 export interface TurnIntent {
+  /** True only when the spawn names creatures that were not in Present before this sentence. */
+  readonly spawnIsNew: boolean;
   readonly spawnQuery: string | null;
   readonly spawnCount: number | null;
   readonly spawnAttitude: (typeof ATTITUDES)[number] | null;
@@ -36,6 +38,7 @@ export function buildIntentSchema(
 ): z.ZodType<TurnIntent> {
   return z
     .strictObject({
+      spawnIsNew: z.boolean(),
       spawnQuery: hasSpawnSupport ? z.string().nullable() : z.null(),
       spawnCount: hasSpawnSupport ? z.number().int().min(1).max(10).nullable() : z.null(),
       spawnAttitude: hasSpawnSupport ? z.enum(ATTITUDES).nullable() : z.null(),

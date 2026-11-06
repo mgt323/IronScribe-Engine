@@ -42,7 +42,7 @@ export function createOrchestrator(options: {
   actorId: EntityId;
 }): Orchestrator {
   const { engine, system, llm, actorId } = options;
-  const ctx = { engine, system, llm, actorId };
+  const ctx = { engine, system, llm, actorId, memory: { lastTargetId: null as string | null } };
   let logs: TurnLogEntry[] = [];
   let undoStack: HistoryEntry[] = [];
   let redoStack: HistoryEntry[] = [];
