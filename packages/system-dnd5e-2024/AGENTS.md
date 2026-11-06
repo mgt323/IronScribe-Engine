@@ -29,7 +29,8 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
 - `readCreature(entity, catalog)` is the shared view: mods, AC, saves, skills,
   initiative (Dexterity modifier only), defenses, condition immunities
 - Menu: `weapon:<id>` for each carried weapon, `monster:<actionId>` for each
-  melee or ranged monster attack. Targets are other present creatures above 0 HP.
+  melee or ranged monster attack, with `monster:multiattack` first when
+  `expandMultiattack` accepts it (fixed integer steps, no options, all attacks). Targets are other present creatures above 0 HP.
   Incapacitated creatures (including paralyzed, stunned, unconscious) offer nothing
 - `resolve` rolls the attack, then damage, then immunity / resistance /
   vulnerability. Facts are engine text (`attack`, `damage`, `hp`). A character
@@ -42,7 +43,15 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
   Medium 15, Hard 20, Very Hard 25, Nearly Impossible 30. Otherwise it returns
   `PROJECT_DEFAULT_CHECK_DC` (12). That 12 is a Stage 6 fallback, not an SRD band,
   and the model never supplies it
-- `resolveSpawn` uses `catalog.monsters.find`. A plural is singularized only when
+- Combat (7A): `state.system.encounter` is `{round, turnIndex, acted, order}`.
+  `initiative` gives one shared d20 per `templateRef` (ties: total, DEX score,
+  player, spawn order). Procedures `advanceTurn`, `advanceRound`, `endEncounter`
+  are dice-free. `nextCombatStep` has NPCs take their first menu action against
+  the player; null means the player is up or combat is suspended (player down,
+  hostiles alive). `endEncounter` only when no living present hostile remains
+- `resolveSpawn` priority: exact id/name, `DEFAULT_MONSTER_VARIANTS` (an Iron
+  Scribe UX policy, not SRD), then `catalog.monsters.find`. Refused with
+  `combat_active` during an encounter. A plural is singularized only when
   that lookup is empty (`wolves` → `wolf`). Ambiguous matches are capped at 10.
   Count is 1..10. Attitude is `hostile`, `neutral`, or `friendly` (default
   `hostile`) and is stored on `entity.system.attitude`
@@ -57,7 +66,7 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
 Theater of the mind: melee counts as within 5 feet and ranged does not, so
 Prone and the paralyzed/unconscious critical-hit rule need no grid. Conditional
 defenses stay notes and do not change damage. Monster initiative has no bonus
-beyond Dexterity. Multiattack, spells and class features are not actions yet.
+beyond Dexterity. Spells and class features are not actions yet.
 
 ## Data
 

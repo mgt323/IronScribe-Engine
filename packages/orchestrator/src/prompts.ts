@@ -108,6 +108,15 @@ export function buildNarrationPrompt(
 function outcomeLines(facts: readonly Fact[]): string[] {
   const out: string[] = [];
   for (const fact of facts) {
+    if (fact.key === 'npc_attack') {
+      const who = fact.text.split(' (')[0] ?? 'The creature';
+      out.push(
+        /\bmiss\b/i.test(fact.text)
+          ? `Outcome: ${who}'s attack MISSES. Do not describe a hit or a wound from it.`
+          : `Outcome: ${who}'s attack HITS. The blow lands.`,
+      );
+      continue;
+    }
     if (fact.key !== 'attack') continue;
     if (/\bmiss\b/i.test(fact.text)) {
       out.push(

@@ -162,7 +162,7 @@ export const ACTION_CASES = [
     check: (ctx) =>
       rules(
         [count(ctx, 'attack') === 0, 'attacked nothing'],
-        [stateOf(ctx).entities.hero.hp.current === 10, 'hero hurt'],
+        [stateOf(ctx).entities.hero.hp.current === stateOf(ctx).entities.hero.hp.max, 'hero hurt'],
       ),
   },
   {

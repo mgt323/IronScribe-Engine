@@ -11,6 +11,7 @@ import { z } from 'zod';
 import type { Catalog } from '../catalog/catalog.js';
 import { ABILITIES, Ability, type Ability as AbilityName } from '../catalog/schema.js';
 import { abilityCheck, savingThrow, skillCheck, type CheckResult } from './checks.js';
+import { runCombatProcedure } from './combat.js';
 import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
 import { rollInitiative } from './initiative.js';
@@ -41,7 +42,13 @@ const InitiativeProcedure = z.strictObject({
   kind: z.literal('initiative'),
   surprised: z.array(z.string()),
 });
+const CombatProcedure = z.strictObject({
+  kind: z.enum(['advanceTurn', 'advanceRound', 'endEncounter']),
+});
 const ProcedureInput = z.discriminatedUnion('kind', [
+  CombatProcedure.extend({ kind: z.literal('advanceTurn') }),
+  CombatProcedure.extend({ kind: z.literal('advanceRound') }),
+  CombatProcedure.extend({ kind: z.literal('endEncounter') }),
   CheckProcedure,
   SaveProcedure,
   InitiativeProcedure,
@@ -75,6 +82,13 @@ export function runDndProcedure(
   const parsed = ProcedureInput.safeParse(procedure);
   if (!parsed.success) throw new EngineError('unknown_alias', 'Invalid procedure');
   const input = parsed.data;
+  if (
+    input.kind === 'advanceTurn' ||
+    input.kind === 'advanceRound' ||
+    input.kind === 'endEncounter'
+  ) {
+    return runCombatProcedure(state, input.kind);
+  }
   if (input.kind === 'initiative') return rollInitiative(state, rng, input.surprised, catalog);
 
   const entity = actor(state, input.actorId);

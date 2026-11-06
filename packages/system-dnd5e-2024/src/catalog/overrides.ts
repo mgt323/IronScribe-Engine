@@ -100,6 +100,23 @@ export const EXTRA_MONSTER_DAMAGE: Readonly<Record<string, readonly ExtraDamage[
  */
 export const UNRESOLVED_MONSTER_DAMAGE: ReadonlySet<string> = new Set(['goat/ram']);
 
+/**
+ * Iron Scribe UX policy, not an SRD rule. A generic family name ("goblin", "goblins")
+ * spawns this stat block instead of asking the player which variant. A named variant
+ * ("goblin boss") still wins, and a broad family ("dragon") is still ambiguous.
+ */
+export const DEFAULT_MONSTER_VARIANTS: Readonly<Record<string, string>> = {
+  goblin: 'goblin-warrior',
+  bugbear: 'bugbear-warrior',
+  hobgoblin: 'hobgoblin-warrior',
+  vampire: 'vampire-vampire',
+  werebear: 'werebear-hybrid',
+  wereboar: 'wereboar-hybrid',
+  wererat: 'wererat-hybrid',
+  weretiger: 'weretiger-hybrid',
+  werewolf: 'werewolf-hybrid',
+};
+
 export function withExtraDamage(m: Monster): Monster {
   const extras = EXTRA_MONSTER_DAMAGE[m.id];
   if (!extras) return m;

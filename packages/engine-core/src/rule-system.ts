@@ -77,7 +77,14 @@ export type SpawnResolution =
       readonly status: 'ambiguous';
       readonly query: string;
       readonly candidates: readonly SpawnCandidate[];
-    };
+    }
+  /** Spawning is refused while an encounter is active; nothing is changed. */
+  | { readonly status: 'combat_active'; readonly query: string };
+
+/** One engine-run step of an encounter, chosen by the rules (never by the model). */
+export type CombatStep =
+  | { readonly kind: 'action'; readonly request: ActionRequest }
+  | { readonly kind: 'procedure'; readonly label: string; readonly procedure: Procedure };
 
 /** Ids the model may use for a check. The system, not the model, picks the DC. */
 export interface CheckCatalog {
@@ -114,5 +121,16 @@ export interface RuleSystem {
    * (e.g. initiative) when the action starts a fight that is not under way yet.
    */
   encounterStart?(state: GameState, actorId: EntityId): Procedure | null;
+  /**
+   * The next step of an active encounter, or null when control belongs to the
+   * player (or combat is over or suspended). Every step must advance combat state.
+   */
+  nextCombatStep?(state: GameState, playerActorId: EntityId): CombatStep | null;
+  /**
+   * Called after an actor finished a turn by acting (the player's menu action, or an
+   * `action` combat step). Returns the procedure that ends that turn, or null when no
+   * encounter is active. `procedure` combat steps already end their own turn.
+   */
+  turnEnd?(state: GameState, actorId: EntityId): Procedure | null;
   applySystemEvent?(state: GameState, event: SystemEvent): GameState;
 }

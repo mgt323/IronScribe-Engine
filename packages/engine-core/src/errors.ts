@@ -10,6 +10,8 @@ export type EngineErrorCode =
   | 'forbidden_event'
   | 'no_system_reducer'
   | 'no_procedure_handler'
+  | 'combat_loop_exceeded'
+  | 'invalid_combat_state'
   | 'nothing_to_undo'
   | 'nothing_to_redo';
 

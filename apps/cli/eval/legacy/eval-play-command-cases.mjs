@@ -37,11 +37,29 @@ export const COMMAND_CASES = [
     id: 'cmd-spawn-ambiguous',
     kind: 'negative',
     category: 'command',
-    steps: ['/spawn goblin'],
+    steps: ['/spawn dragon'],
     check: (ctx) =>
       rules(
         [/Which one/.test(out(ctx, '/spawn')), 'no question'],
         [stateOf(ctx).spawnOrder.length === 1, 'spawned while ambiguous'],
+      ),
+  },
+  {
+    id: 'cmd-spawn-default-variant',
+    category: 'command',
+    steps: ['/spawn goblin'],
+    check: (ctx) =>
+      rules([monsters(ctx, 'goblin-warrior').length === 1, 'goblin did not default to warrior']),
+  },
+  {
+    id: 'cmd-spawn-refused-in-combat',
+    kind: 'negative',
+    category: 'command',
+    steps: ['/spawn goblin-warrior', '/init', '/spawn wolf'],
+    check: (ctx) =>
+      rules(
+        [monsters(ctx, 'wolf').length === 0, 'spawned during combat'],
+        [/combat/i.test(out(ctx, '/spawn wolf')), 'no combat message'],
       ),
   },
   {

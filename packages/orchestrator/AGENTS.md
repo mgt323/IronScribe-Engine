@@ -31,6 +31,12 @@ state except by calling the engine.
   the partial text and sets `narrationError`. The mechanics stay committed
 - `buildIntentSchema` / `buildDecisionSchema` are flat. An empty alias list is
   `z.null()`, never `z.enum([])`. Intent has no aliases and no DC. `spawnIsNew` is required and comes first: when it is false the spawn fields are ignored, so "a goblin" for one already present spawns nothing
+- Combat loop (`combat.ts`): `runPlayerTurn` opens the encounter, runs
+  `advanceCombatUntilPlayer` (NPCs ahead of the player), skips the player's action
+  if they went down, then calls `turnEnd` and the loop again. `/init` also runs
+  the loop. `MAX_COMBAT_STEPS = 32`; past it the turn is restored and
+  `combat_loop_exceeded` thrown. NPC attack facts are key `npc_attack`:
+  `Name (Action): <roll text>`. A `combat_active` spawn is a clarification
 - Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules

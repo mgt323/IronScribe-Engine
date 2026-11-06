@@ -78,7 +78,7 @@ describe('cli play', () => {
       {
         text: intent({
           ...idle,
-          spawnQuery: 'goblin',
+          spawnQuery: 'dragon',
           spawnCount: 1,
           spawnAttitude: 'hostile',
         }),
@@ -138,9 +138,9 @@ describe('cli play', () => {
     expect(session.orchestrator.canUndoTurn).toBe(false);
 
     const clarifyOut = writer();
-    await handleCliLine(session, 'I enter the old armory. There is a goblin inside.', clarifyOut);
+    await handleCliLine(session, 'I enter the old armory. There is a dragon inside.', clarifyOut);
     expect(session.orchestrator.logs.at(-1)?.status).toBe('clarify');
-    expect(clarifyOut.text()).toContain('goblin-boss\ngoblin-minion\ngoblin-warrior');
+    expect(clarifyOut.text()).toContain('dragon');
     expect(session.orchestrator.canUndoTurn).toBe(false);
     expect(engine.commits).toHaveLength(1);
 
@@ -189,7 +189,7 @@ describe('cli play', () => {
       },
       { text: 'A wolf pads in.' },
       {
-        text: intent({ ...idle, spawnQuery: 'goblin', spawnCount: 1, spawnAttitude: 'hostile' }),
+        text: intent({ ...idle, spawnQuery: 'dragon', spawnCount: 1, spawnAttitude: 'hostile' }),
       },
     ]);
     const session = createCliSession({
@@ -205,7 +205,7 @@ describe('cli play', () => {
     await handleCliLine(session, '/undo', out);
     expect(session.orchestrator.canRedoTurn).toBe(true);
     expect(session.orchestrator.engine.state.entities['wolf_1']).toBeUndefined();
-    await handleCliLine(session, 'A goblin.', out);
+    await handleCliLine(session, 'A dragon.', out);
     expect(session.orchestrator.logs.at(-1)?.status).toBe('clarify');
     expect(session.orchestrator.canRedoTurn).toBe(true);
     const status = writer();

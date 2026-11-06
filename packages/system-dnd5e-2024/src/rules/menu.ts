@@ -10,6 +10,7 @@ import type { Catalog } from '../catalog/catalog.js';
 import { readMonsterSnapshot } from '../catalog/spawn.js';
 import { readCharacter } from './character.js';
 import { isIncapacitated, readConditions } from './conditions.js';
+import { expandMultiattack, MULTIATTACK_ACTION_ID } from './multiattack.js';
 
 function targetsOf(state: GameState, actorId: string): ActionMenu['targets'] {
   return state.spawnOrder
@@ -40,20 +41,25 @@ function weaponActions(actor: Entity, catalog: Catalog): MenuAction[] {
 }
 
 function monsterActions(actor: Entity): MenuAction[] {
-  const attacks = readMonsterSnapshot(actor).actions.filter(
+  const all = readMonsterSnapshot(actor).actions;
+  const attacks = all.filter(
     (action) =>
       action.attackBonus !== null &&
       (action.kind === 'melee' || action.kind === 'ranged' || action.kind === 'meleeOrRanged'),
   );
-  return attacks.map((action, index) => ({
+  const entries = attacks.map((action) => ({ id: action.id, name: action.name }));
+  if (expandMultiattack(all).length > 0) {
+    entries.unshift({ id: MULTIATTACK_ACTION_ID, name: 'Multiattack' });
+  }
+  return entries.map((entry, index) => ({
     alias: `A${String(index + 1)}`,
-    actionId: `monster:${action.id}`,
-    label: action.name,
+    actionId: `monster:${entry.id}`,
+    label: entry.name,
     needsTarget: true,
   }));
 }
 
-/** Weapons on a character sheet, or a monster's attack actions. No Multiattack or spells. */
+/** Weapons on a character sheet, or a monster's attacks (Multiattack first when automatable). */
 export function buildMenu(state: GameState, actorId: string, catalog: Catalog): ActionMenu {
   const actor = state.entities[actorId];
   if (!actor) throw new EngineError('unknown_entity', `Unknown entity: ${actorId}`);

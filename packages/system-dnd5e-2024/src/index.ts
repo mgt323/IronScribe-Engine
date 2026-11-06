@@ -26,7 +26,14 @@ export {
 } from './rules/conditions.js';
 export { readCreature, type Creature } from './rules/creature.js';
 export { applyDefenses, rollMonsterDamage, rollWeaponDamage } from './rules/damage.js';
-export { rollInitiative } from './rules/initiative.js';
+export { DEFAULT_MONSTER_VARIANTS } from './catalog/overrides.js';
+export { dndNextCombatStep, dndTurnEnd, readEncounter } from './rules/combat.js';
+export { expandMultiattack } from './rules/multiattack.js';
+export {
+  rollInitiative,
+  type EncounterOrderEntry,
+  type EncounterState,
+} from './rules/initiative.js';
 export { abilityModifier, proficiencyBonus } from './rules/modifiers.js';
 export { resolveDndSpawn } from './rules/spawn-intent.js';
 export { createDnd5eSystem } from './rules/system.js';

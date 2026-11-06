@@ -22,8 +22,9 @@ export const facts = (ctx) => says(ctx).flatMap((t) => t.result.facts);
 export const keys = (ctx) => facts(ctx).map((f) => f.key);
 export const count = (ctx, key) => keys(ctx).filter((k) => k === key).length;
 
-/** Requests the player's actions made (alias of the menu entry used). */
-export const requests = (ctx) => commits(ctx).flatMap((c) => (c.request ? [c.request] : []));
+/** Requests the player's actions made (NPC turns are not included) (alias of the menu entry used). */
+export const requests = (ctx) =>
+  commits(ctx).flatMap((c) => (c.request?.actorId === HERO ? [c.request] : []));
 
 /** Skill and ability of every check procedure that ran. */
 export const checks = (ctx) =>
@@ -50,7 +51,7 @@ export const aimed = (ctx) =>
     turn.kind !== 'say'
       ? []
       : turn.result.commits.flatMap((c) => {
-          if (!c.request?.targetAlias) return [];
+          if (c.request?.actorId !== HERO || !c.request.targetAlias) return [];
           const target = turn.menu.targets.find((t) => t.alias === c.request.targetAlias);
           return [
             { turn: index, entityId: target?.entityId ?? null, actionAlias: c.request.actionAlias },

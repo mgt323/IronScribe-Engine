@@ -19,7 +19,8 @@ import {
 } from './helpers.js';
 import { narrateFacts } from './narrate.js';
 import { buildNarrationPrompt } from './prompts.js';
-import { actionFrom, checkFrom, openEncounter, readIntent, spawnFrom } from './steps.js';
+import { advanceCombatUntilPlayer, runPlayerTurn } from './combat.js';
+import { actionFrom, checkFrom, readIntent, spawnFrom } from './steps.js';
 import type { TurnIntent } from './schemas.js';
 import type {
   Orchestrator,
@@ -229,21 +230,26 @@ export function createOrchestrator(options: {
         `act ${request.actionAlias} ${request.targetAlias ?? ''}`.trim(),
         () => {
           const started = engine.commits.length;
-          const opening =
-            request.targetAlias === null ? [] : openEncounter(engine, system, actorId);
-          const commit = engine.perform(request);
-          return {
-            commits: engine.commits.slice(started),
-            facts: [...opening, ...commit.facts],
-            clarification: null,
-          };
+          const facts = runPlayerTurn(engine, system, actorId, request.targetAlias !== null, () => [
+            ...engine.perform(request).facts,
+          ]);
+          return { commits: engine.commits.slice(started), facts, clarification: null };
         },
         run,
       ),
     runSpawn: (request, run) =>
       runDirect(`spawn ${request.query}`, () => spawnDirect(engine, system, request), run),
     runProcedureTurn: (label, procedure, run) =>
-      runDirect(label, () => performed(engine, () => engine.runProcedure(label, procedure)), run),
+      runDirect(
+        label,
+        () =>
+          performed(engine, () => {
+            const commit = engine.runProcedure(label, procedure);
+            const rest = advanceCombatUntilPlayer(engine, system, actorId);
+            return { ...commit, facts: [...commit.facts, ...rest] };
+          }),
+        run,
+      ),
     undoTurn() {
       const entry = undoStack.at(-1);
       if (!entry) throw new EngineError('nothing_to_undo', 'Nothing to undo');

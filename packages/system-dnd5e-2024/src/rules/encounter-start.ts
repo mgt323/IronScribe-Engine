@@ -5,7 +5,7 @@ import type { EntityId, GameState, Procedure } from '@iron-scribe/engine-core';
  * a hostile creature above 0 HP is present: roll it. Surprise is not modelled.
  */
 export function dndEncounterStart(state: GameState, actorId: EntityId): Procedure | null {
-  if (state.system['encounter'] !== undefined) return null;
+  if (state.system['encounter'] != null) return null;
   const hostile = state.spawnOrder.some((id) => {
     const entity = state.entities[id];
     return (

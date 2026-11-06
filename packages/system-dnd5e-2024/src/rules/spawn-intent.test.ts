@@ -2,6 +2,7 @@ import { createInitialState } from '@iron-scribe/engine-core';
 import { describe, expect, it } from 'vitest';
 
 import { loadCatalog } from '../catalog/catalog.js';
+import { DEFAULT_MONSTER_VARIANTS } from '../catalog/overrides.js';
 import { readMonsterSnapshot } from '../catalog/spawn.js';
 import { PROJECT_DEFAULT_CHECK_DC, SRD_TYPICAL_DC, resolveDndCheckDc } from './check-dc.js';
 import { resolveDndSpawn } from './spawn-intent.js';
@@ -58,19 +59,38 @@ describe('resolveDndSpawn', () => {
     expect(zombies.entities.every((entity) => entity.system['attitude'] === 'neutral')).toBe(true);
   });
 
-  it('goblin is the whole-word set, including the boss, and caps a long list at 10', () => {
-    const goblins = resolveDndSpawn(state, { query: 'goblin', count: 1 }, catalog);
-    expect(goblins.status).toBe('ambiguous');
-    if (goblins.status !== 'ambiguous') return;
-    expect(goblins.candidates.map((candidate) => candidate.id)).toEqual([
-      'goblin-boss',
-      'goblin-minion',
-      'goblin-warrior',
-    ]);
-    const plural = resolveDndSpawn(state, { query: 'goblins', count: 1 }, catalog);
-    expect(plural.status).toBe('ambiguous');
-    if (plural.status !== 'ambiguous') return;
-    expect(plural.candidates).toEqual(goblins.candidates);
+  it('every default variant points at a real template', () => {
+    for (const [family, id] of Object.entries(DEFAULT_MONSTER_VARIANTS)) {
+      expect(catalog.monsters.get(id), `${family} -> ${id}`).toBeTruthy();
+    }
+  });
+
+  it('resolves exact variant, then default family variant, then catalog search', () => {
+    const ids = (query: string, count = 1) => {
+      const result = resolveDndSpawn(state, { query, count }, catalog);
+      return result.status === 'matched' ? result.entities.map((e) => e.id) : result.status;
+    };
+    expect(ids('goblin boss')).toEqual(['goblin_boss_1']);
+    expect(ids('Goblin Minion')).toEqual(['goblin_minion_1']);
+    expect(ids('goblin')).toEqual(['goblin_warrior_1']);
+    expect(ids('goblins', 2)).toEqual(['goblin_warrior_1', 'goblin_warrior_2']);
+    expect(ids('dragon')).toBe('ambiguous');
+    expect(ids('giant')).toBe('ambiguous');
+  });
+
+  it('refuses to spawn while an encounter is active and changes nothing', () => {
+    const active = {
+      ...state,
+      system: { encounter: { round: 1, turnIndex: 0, acted: [], order: [] } },
+    };
+    expect(resolveDndSpawn(active, { query: 'wolf', count: 1 }, catalog)).toEqual({
+      status: 'combat_active',
+      query: 'wolf',
+    });
+    expect(active.spawnOrder).toEqual([]);
+  });
+
+  it('caps a long ambiguous list at 10', () => {
     const broad = catalog.monsters.find('dragon');
     expect(broad.length).toBeGreaterThan(10);
     const dragons = resolveDndSpawn(state, { query: 'dragon', count: 1 }, catalog);
