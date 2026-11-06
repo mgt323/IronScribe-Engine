@@ -15,6 +15,7 @@ export {
 } from './rules/attack.js';
 export { Character, characterToEntity, readCharacter } from './rules/character.js';
 export { abilityCheck, savingThrow, skillCheck, type CheckResult } from './rules/checks.js';
+export { PROJECT_DEFAULT_CHECK_DC, SRD_TYPICAL_DC, resolveDndCheckDc } from './rules/check-dc.js';
 export {
   NO_CONDITIONS,
   conditionEvents,
@@ -27,4 +28,5 @@ export { readCreature, type Creature } from './rules/creature.js';
 export { applyDefenses, rollMonsterDamage, rollWeaponDamage } from './rules/damage.js';
 export { rollInitiative } from './rules/initiative.js';
 export { abilityModifier, proficiencyBonus } from './rules/modifiers.js';
+export { resolveDndSpawn } from './rules/spawn-intent.js';
 export { createDnd5eSystem } from './rules/system.js';

@@ -13,13 +13,22 @@ or concrete system packages.
 - `createEngine({ system, initialState })` -> `Engine`: `state`, `commits`,
   `canUndo`, `canRedo`, `menu(actorId)`, `perform(ActionRequest)`,
   `runProcedure(label, Procedure)`, `commit(label, events)` (request and
-  procedure `null`), `undo()`, `redo()`
+  procedure `null`), `undo()`, `redo()`, `snapshot()`, `restore(snapshot)`
+- `EngineSnapshot` is `{ commits, redo }`. `restore` rebuilds state from those
+  commits and puts `redo` back. It does not push the dropped commits onto redo
+  (unlike `undo`)
 - `Commit` carries `request` (player action) or `procedure` (engine-triggered
   roll), never both
 - `applyEvent`, `applyEvents` (pure), `replay(initial, commits, system)`,
   `validateRequest(menu, request)` -> `ResolvedRequest`
 - `RuleSystem`: `availableActions`, `resolve(state, ResolvedRequest, rng)`,
-  optional `runProcedure(state, Procedure, rng)`, optional `applySystemEvent`
+  optional `runProcedure(state, Procedure, rng)`, optional `applySystemEvent`,
+  optional `checkCatalog`, optional `resolveCheckDc(state, CheckDcContext)`,
+  optional `resolveSpawn(state, SpawnRequest)`
+- `CheckDcContext` is typed (`actorId`, `ability`, `skill`, optional
+  `procedureId`, optional `difficulty` band). No free-form model text
+- `SpawnRequest.attitude` is an optional string. The concrete ruleset validates
+  it. `SpawnResolution` is `matched`, `not_found`, or `ambiguous`
 - `Procedure` is `{ kind, ...payload }` with JSON-safe values
 - `EngineError` with a `code`
 
@@ -32,7 +41,10 @@ Notes:
 - One undo step is one commit.
 - Combat state (round, turn, initiative) lives in the rule system's global
   `system` bag, not in the core.
-- Fake rule system for tests: `src/testing/fake-system.ts`.
+- Fake rule system for tests: `src/testing/fake-system.ts`, also exported as
+  `@iron-scribe/engine-core/testing`. `rat` matches, `goblin` is ambiguous,
+  anything else is not found. `resolveCheckDc` returns 12. `{ kind: 'check' }`
+  records a fact and does not roll.
 
 ## Test rules
 

@@ -25,6 +25,12 @@ export interface Commit {
   readonly facts: readonly Fact[];
 }
 
+/** Commits and redo as they were. Restoring this does not push the dropped commits onto redo. */
+export interface EngineSnapshot {
+  readonly commits: readonly Commit[];
+  readonly redo: readonly Commit[];
+}
+
 export interface Engine {
   readonly state: GameState;
   readonly commits: readonly Commit[];
@@ -36,6 +42,8 @@ export interface Engine {
   commit(label: string, events: readonly CoreEvent[]): Commit;
   undo(): void;
   redo(): void;
+  snapshot(): EngineSnapshot;
+  restore(snapshot: EngineSnapshot): void;
 }
 
 function rejectRngEvents(events: readonly CoreEvent[]): void {
@@ -152,6 +160,14 @@ export function createEngine(options: { system: RuleSystem; initialState: GameSt
       state = applyEvents(state, next.events, system);
       commits = [...commits, next];
       redoStack = redoStack.slice(0, -1);
+    },
+    snapshot() {
+      return { commits: [...commits], redo: [...redoStack] };
+    },
+    restore(snapshot) {
+      commits = [...snapshot.commits];
+      redoStack = [...snapshot.redo];
+      state = replay(initialState, commits, system);
     },
   };
 }

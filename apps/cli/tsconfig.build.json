@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"],
+  "references": [
+    { "path": "../../packages/engine-core/tsconfig.build.json" },
+    { "path": "../../packages/llm/tsconfig.build.json" },
+    { "path": "../../packages/orchestrator/tsconfig.build.json" },
+    { "path": "../../packages/system-dnd5e-2024/tsconfig.build.json" }
+  ]
+}

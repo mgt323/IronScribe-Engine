@@ -211,6 +211,32 @@ describe('procedures, undo and replay', () => {
     expect(commit.events.some((event) => event.type === 'rng.advanced')).toBe(true);
   });
 
+  it('a stealth check is only a fact: no Invisible, and the attack is unchanged', () => {
+    const initial = createInitialState({ seed: 'stealth' });
+    const engine = createEngine({ system, initialState: initial });
+    engine.commit('spawn', [{ type: 'entity.spawned', entity: heroEntity() }]);
+    const check = engine.runProcedure('check', {
+      kind: 'check',
+      actorId: 'hero',
+      ability: 'dex',
+      skill: 'stealth',
+      dc: 12,
+    });
+    expect(check.facts.map((fact) => fact.text).join(' ')).toMatch(/^Stealth \d+ vs DC 12, /);
+    expect(check.events.some((event) => event.type === 'entity.systemDataSet')).toBe(false);
+    const hero = engine.state.entities['hero'];
+    if (!hero) throw new Error('missing');
+    expect(readConditions(hero).ids).not.toContain('invisible');
+    expect(
+      system.resolveCheckDc?.(engine.state, {
+        actorId: 'hero',
+        ability: 'dex',
+        skill: 'stealth',
+        procedureId: 'check',
+      }),
+    ).toBe(12);
+  });
+
   it('rejects a procedure the rules do not know', () => {
     const engine = createEngine({ system, initialState: createInitialState({ seed: 1 }) });
     expect(() => engine.runProcedure('nope', { kind: 'sing', song: 'x' })).toThrow(EngineError);

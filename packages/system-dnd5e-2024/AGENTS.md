@@ -37,6 +37,18 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
 - `runProcedure`: `check` `{ actorId, ability, skill|null, dc }`, `save`
   `{ actorId, ability, dc }`, `initiative` `{ surprised }`. Payloads are
   Zod-checked. Initiative writes `state.system.encounter`
+- `checkCatalog` lists abilities and skill ids. `resolveCheckDc(state, context)`
+  returns `SRD_TYPICAL_DC` when `context.difficulty` is set: Very Easy 5, Easy 10,
+  Medium 15, Hard 20, Very Hard 25, Nearly Impossible 30. Otherwise it returns
+  `PROJECT_DEFAULT_CHECK_DC` (12). That 12 is a Stage 6 fallback, not an SRD band,
+  and the model never supplies it
+- `resolveSpawn` uses `catalog.monsters.find`. A plural is singularized only when
+  that lookup is empty (`wolves` → `wolf`). Ambiguous matches are capped at 10.
+  Count is 1..10. Attitude is `hostile`, `neutral`, or `friendly` (default
+  `hostile`) and is stored on `entity.system.attitude`
+- A Stealth check is only the check fact (`Stealth N vs DC …, success|failure`).
+  It does not grant Invisible, change Advantage, or spend an action. Hide is
+  Stage 7. `resolve-attack.ts` is unchanged
 - Pure helpers: `abilityModifier`, `proficiencyBonus`, `abilityCheck`,
   `skillCheck`, `savingThrow`, `attackRoll`, `weaponAttackBonus`,
   `rollWeaponDamage`, `rollMonsterDamage`, `applyDefenses`, `rollInitiative`,

@@ -33,6 +33,28 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@22.20.5)
 
+  apps/cli:
+    dependencies:
+      '@iron-scribe/engine-core':
+        specifier: workspace:*
+        version: link:../../packages/engine-core
+      '@iron-scribe/llm':
+        specifier: workspace:*
+        version: link:../../packages/llm
+      '@iron-scribe/orchestrator':
+        specifier: workspace:*
+        version: link:../../packages/orchestrator
+      '@iron-scribe/system-dnd5e-2024':
+        specifier: workspace:*
+        version: link:../../packages/system-dnd5e-2024
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.5)
+
   packages/dice:
     devDependencies:
       vitest:
@@ -67,6 +89,9 @@ importers:
       '@iron-scribe/llm':
         specifier: workspace:*
         version: link:../llm
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       vitest:
         specifier: ^3.2.4

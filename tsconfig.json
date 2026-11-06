@@ -5,6 +5,7 @@
     { "path": "./packages/engine-core/tsconfig.build.json" },
     { "path": "./packages/system-dnd5e-2024/tsconfig.build.json" },
     { "path": "./packages/llm/tsconfig.build.json" },
-    { "path": "./packages/orchestrator/tsconfig.build.json" }
+    { "path": "./packages/orchestrator/tsconfig.build.json" },
+    { "path": "./apps/cli/tsconfig.build.json" }
   ]
 }

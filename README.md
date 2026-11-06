@@ -10,7 +10,7 @@ Version 1 is theater-of-the-mind and single player.
 
 ## Status
 
-Stages 0-5 (tooling, dice, engine-core, SRD import, D&D rules, LLM providers) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
+Stages 0-6 (tooling, dice, engine-core, SRD import, D&D rules, LLM providers, CLI play) are done, including the full SRD 5.2.1 data set (Stage 3b). See [docs/status.md](docs/status.md).
 
 ## License
 
@@ -40,6 +40,20 @@ pnpm --filter @iron-scribe/dice build
 pnpm roll -- 2d6+3
 pnpm roll -- d20 --adv -m 5 --seed 42
 ```
+
+### Play
+
+Build first. A local OpenAI-compatible server needs no API key. Gemini needs
+`GEMINI_API_KEY`, `GOOGLE_API_KEY`, or `--api-key` (the key is never printed
+or written into `/save`).
+
+```bash
+pnpm --filter @iron-scribe/cli build
+pnpm play -- --url http://127.0.0.1:5001
+```
+
+You confirm a Level 1 Rogue, then type. `/help` lists `/status`, `/sheet`,
+`/act`, `/spawn`, `/init`, `/undo`, `/redo`, `/log`, and `/save`.
 
 ### LLM eval
 

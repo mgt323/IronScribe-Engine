@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@iron-scribe/engine-core": "workspace:*",
-    "@iron-scribe/llm": "workspace:*"
+    "@iron-scribe/llm": "workspace:*",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
