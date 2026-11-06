@@ -30,7 +30,8 @@ The orchestrator knows `RuleSystem`, not a concrete D&D package. One
 
 - **One stage per chat.** Stop when that stage's tests pass. Do not scaffold
   the whole product in one session.
-- Prefer files under about **300 lines**.
+- Prefer files under about **300 lines**. Live eval suites and their cases
+  (`apps/cli/eval/`, including `legacy/`) are exempt: they may run longer.
 - Write **failing tests from SRD examples**, then implement until they pass.
 - Each package has a short `AGENTS.md` (purpose, public interface, test rules).
 - Keep `docs/status.md` current.
@@ -53,6 +54,6 @@ The orchestrator knows `RuleSystem`, not a concrete D&D package. One
 | 4. D&D rules        | Checks, saves, attacks, damage, conditions, initiative |
 | 5. LLM + eval       | Forced JSON, one repair retry                          |
 | 6. CLI play         | Free text → intent → roll → narration                  |
-| 7+                  | Combat, web, memory, desktop, Daggerheart              |
+| 7+                  | Encounters, web, memory, desktop, Daggerheart          |
 
 Stage 6 is the gate before UI work.

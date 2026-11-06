@@ -3,6 +3,7 @@ import type { RuleSystem } from '@iron-scribe/engine-core';
 import type { Catalog } from '../catalog/catalog.js';
 import { ABILITIES } from '../catalog/schema.js';
 import { resolveDndCheckDc } from './check-dc.js';
+import { dndNextCombatStep, dndTurnEnd } from './combat.js';
 import { dndEncounterStart } from './encounter-start.js';
 import { buildMenu } from './menu.js';
 import { runDndProcedure } from './procedures.js';
@@ -24,5 +25,7 @@ export function createDnd5eSystem(options: { catalog: Catalog }): RuleSystem {
     resolveCheckDc: (state, context) => resolveDndCheckDc(state, context),
     resolveSpawn: (state, request) => resolveDndSpawn(state, request, catalog),
     encounterStart: (state, actorId) => dndEncounterStart(state, actorId),
+    nextCombatStep: (state, playerId) => dndNextCombatStep(state, playerId, catalog),
+    turnEnd: (state, actorId) => dndTurnEnd(state, actorId),
   };
 }

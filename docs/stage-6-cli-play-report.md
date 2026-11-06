@@ -1,7 +1,7 @@
 # Live play eval: report
 
 Date: 2026-11-05. Command:
-`node apps/cli/bin/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl`
+`node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl`
 Model: `koboldcpp/gemma-4-26B-A4B-it-qat-uncensored-heretic-UDmerge-Q4_K_XXL`,
 `json_schema`, temperature 0. 52 cases, 3 runs each (153 case runs, 315 model calls).
 
@@ -32,6 +32,10 @@ After the two fixes, `no-attack-without-target` and `attack-picks-target` passed
 on a rerun. The full suite was not rerun.
 
 ## Open 1: `spawn-friendly-guard` (FAIL, 0/3)
+
+> Update: deprioritised. The model reads NPC interaction well in practice, and the case
+> passed in a later single run. Long term, presence moves to proximity levels
+> (`docs/stage-7-encounters.md`, 7C).
 
 Input: "A friendly guard waves at me from the gate and offers to help."
 
@@ -128,8 +132,8 @@ both a wolf and a bandit.
 
 ```bash
 pnpm --filter @iron-scribe/cli build
-node apps/cli/bin/eval-play.mjs --url http://127.0.0.1:5001 --only friendly --runs 3
-node apps/cli/bin/eval-play.mjs --url http://127.0.0.1:5001 --only mixed --runs 3 --out mixed.jsonl
+node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --only friendly --runs 3
+node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --only mixed --runs 3 --out mixed.jsonl
 ```
 
 `--out` writes the raw replies, facts and narration for each run.

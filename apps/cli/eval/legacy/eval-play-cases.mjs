@@ -170,29 +170,42 @@ export const SPAWN_CASES = [
   {
     id: 'clarify-keeps-count',
     category: 'clarify',
-    steps: ['Two goblins stand guard on the path ahead.', 'goblin-warrior'],
+    steps: ['Two dragon wyrmlings guard the path ahead.', 'black-dragon-wyrmling'],
     check: (ctx) =>
       rules(
         [clarified(ctx).length === 1, 'expected one clarification'],
         [clarified(ctx)[0].result.clarification.candidates.length >= 3, 'fewer than 3 candidates'],
         [
-          monsters(ctx, 'goblin-warrior').length === 2,
-          `got ${monsters(ctx, 'goblin-warrior').length}`,
+          monsters(ctx, 'black-dragon-wyrmling').length === 2,
+          `got ${monsters(ctx, 'black-dragon-wyrmling').length}`,
         ],
       ),
   },
   {
     id: 'clarify-answer-by-name',
     category: 'clarify',
-    steps: ['Three goblins jump out of the bushes.', 'Goblin Minion'],
+    steps: ['Three dragon wyrmlings burst out of the bushes.', 'Blue Dragon Wyrmling'],
     check: (ctx) =>
-      rules([monsters(ctx, 'goblin-minion').length === 3, 'expected 3 goblin-minion']),
+      rules([monsters(ctx, 'blue-dragon-wyrmling').length === 3, 'expected 3 blue wyrmlings']),
+  },
+  {
+    id: 'default-variant-no-question',
+    category: 'clarify',
+    steps: ['Two goblins stand guard on the path ahead.'],
+    check: (ctx) =>
+      rules(
+        [!clarified(ctx).length, 'asked which goblin (default variant expected)'],
+        [monsters(ctx, 'goblin-warrior').length === 2, 'expected 2 goblin-warrior'],
+      ),
   },
   {
     id: 'clarify-then-moved-on',
     kind: 'negative',
     category: 'clarify',
-    steps: ['A goblin appears at the edge of the camp.', 'I back away quietly and sit down.'],
+    steps: [
+      'A dragon wyrmling appears at the edge of the camp.',
+      'I back away quietly and sit down.',
+    ],
     check: (ctx) => rules([others(ctx).length === 0, 'spawned after the player moved on']),
   },
 ];

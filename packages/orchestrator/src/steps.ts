@@ -8,6 +8,7 @@ import {
 } from '@iron-scribe/engine-core';
 import type { LlmClient, StructuredPrompt } from '@iron-scribe/llm';
 
+import { runPlayerTurn } from './combat.js';
 import { buildDecisionPrompt, buildIntentPrompt } from './prompts.js';
 import { buildDecisionSchema, buildIntentSchema, type TurnIntent } from './schemas.js';
 import type { TurnClarification } from './types.js';
@@ -24,6 +25,14 @@ export interface StepContext {
 type Unmatched = Exclude<SpawnResolution, { status: 'matched' }>;
 
 export function clarificationFor(resolution: Unmatched): TurnClarification {
+  if (resolution.status === 'combat_active') {
+    return {
+      reason: 'combat_active',
+      query: resolution.query,
+      candidates: [],
+      message: 'Cannot spawn new creatures during active combat.',
+    };
+  }
   if (resolution.status === 'not_found') {
     return {
       reason: 'unknown_spawn',
@@ -144,21 +153,11 @@ export async function actionFrom(
   });
   raw.push(...result.attempts.map((attempt) => attempt.rawText));
   if (result.data.kind === 'none' || result.data.actionAlias === null) return [];
-  const opening =
-    result.data.targetAlias === null ? [] : openEncounter(ctx.engine, ctx.system, ctx.actorId);
-  const aimed = menu.targets.find((target) => target.alias === result.data.targetAlias);
-  const commit = ctx.engine.perform({
-    actorId: ctx.actorId,
-    actionAlias: result.data.actionAlias,
-    targetAlias: result.data.targetAlias,
+  const { actionAlias, targetAlias } = result.data;
+  const aimed = menu.targets.find((target) => target.alias === targetAlias);
+  return runPlayerTurn(ctx.engine, ctx.system, ctx.actorId, targetAlias !== null, () => {
+    const commit = ctx.engine.perform({ actorId: ctx.actorId, actionAlias, targetAlias });
+    if (aimed) ctx.memory.lastTargetId = aimed.entityId;
+    return [...commit.facts];
   });
-  if (aimed) ctx.memory.lastTargetId = aimed.entityId;
-  return [...opening, ...commit.facts];
-}
-
-/** Rolls the system's opening procedure (initiative) before the first targeted action. */
-export function openEncounter(engine: Engine, system: RuleSystem, actorId: EntityId): Fact[] {
-  const procedure = system.encounterStart?.(engine.state, actorId) ?? null;
-  if (procedure === null) return [];
-  return [...engine.runProcedure('encounter', procedure).facts];
 }

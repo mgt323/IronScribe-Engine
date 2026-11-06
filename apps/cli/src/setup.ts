@@ -7,6 +7,7 @@ import {
   readCharacter,
   readConditions,
   readCreature,
+  readEncounter,
   type Catalog,
 } from '@iron-scribe/system-dnd5e-2024';
 import { z } from 'zod';
@@ -136,8 +137,16 @@ export function formatSceneStatus(
     menu.targets.length > 0
       ? menu.targets.map((target) => `${target.alias} ${target.label}`)
       : ['(none)'];
+  const encounter = readEncounter(state);
+  const combat = encounter
+    ? [
+        `Combat: round ${String(encounter.round)}` +
+          (menu.actions.length === 0 ? ' (suspended: you cannot act)' : ''),
+      ]
+    : [];
   return [
     scene.join('\n'),
+    ...combat,
     `You: ${actorId}`,
     `Actions: ${actions.join(', ')}`,
     `Targets: ${targets.join(', ')}`,

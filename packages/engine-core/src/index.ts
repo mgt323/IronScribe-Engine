@@ -10,6 +10,7 @@ export type {
   CheckCatalog,
   CheckDcContext,
   CheckDifficultyBand,
+  CombatStep,
   Fact,
   MenuAction,
   MenuTarget,

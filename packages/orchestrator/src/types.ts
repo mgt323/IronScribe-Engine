@@ -16,7 +16,7 @@ type RngState = GameState['rng'];
 export type TurnStatus = 'resolved' | 'none' | 'clarify';
 
 export interface TurnClarification {
-  readonly reason: 'unknown_spawn' | 'ambiguous_spawn';
+  readonly reason: 'unknown_spawn' | 'ambiguous_spawn' | 'combat_active';
   readonly query: string;
   readonly candidates: readonly SpawnCandidate[];
   readonly message: string;

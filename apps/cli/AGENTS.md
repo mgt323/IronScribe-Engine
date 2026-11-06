@@ -19,7 +19,7 @@ a name and a backstory. It does not draft scores, hit points, or gear.
 - `bin/play.mjs` (`pnpm play`) reads `--api-key` or `GEMINI_API_KEY` /
   `GOOGLE_API_KEY` / `OPENAI_API_KEY` and passes the key only to the adapter
 
-- `bin/eval-play.mjs` is a live eval (not run in CI): 53 cases against a real
+- `eval/legacy/eval-play.mjs` is a live eval (not run in CI): 53 cases against a real
   model and the real D&D rules, in seven categories (spawn, clarify, action, check,
   narration, command, e2e), positive and negative. Cases live in `eval-play-*cases.mjs`. `e2e-three-encounters` is one long
   session: friendly, neutral and hostile creatures, a target shift, a target
@@ -31,11 +31,26 @@ a name and a backstory. It does not draft scores, hit points, or gear.
 
   ```bash
   pnpm --filter @iron-scribe/cli build
-  node apps/cli/bin/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl
+  node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl
   ```
+
+- `eval/run.mjs` is the Stage 7A live eval (`pnpm --filter @iron-scribe/cli eval:7a -- <flags>`), replacing
+  `eval/legacy/eval-play.mjs` for combat work. It reports three layers apart: **engine invariants** (audited on
+  every turn of every case: HP range, one initiative per encounter, round +1 per hero action, order
+  respected, nobody acts when down, no mechanics in narration), **case goals**, and **model behavior**
+  (target and weapon accuracy, narration probes, latency p50/p95, calls, repairs, tokens). Tiers: `engine`
+  (monsters from `/spawn`, dice pinned by setup commits) and `full` (prose spawns, policy-driven
+  fights). `--provider oracle` is a rule-based stand-in: it proves the harness with no server and
+  gives a ceiling. Dice-dependent cases skip (not fail) when the situation did not occur. `--summary`
+  plus `--compare` diff two models. Files: `eval/cases/*` (cases), `eval/lib/*` (driver, audit,
+  policy, soft probes, report).
+
+## Combat
+
+`/status` shows `Combat: round N`, with a suspended note when the hero cannot act.
 
 ## Test rules
 
 - End-to-end tests use `createScriptedLlmClient` and the real D&D system.
 - A Stealth check before an attack must not grant Invisible or Advantage.
-- Keep files under about 300 lines.
+- Keep files under about 300 lines. Eval files (everything under `eval/`) are exempt.

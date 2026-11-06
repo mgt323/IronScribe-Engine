@@ -7,6 +7,8 @@ import {
 import { z } from 'zod';
 
 import type { Catalog } from '../catalog/catalog.js';
+import { DEFAULT_MONSTER_VARIANTS } from '../catalog/overrides.js';
+import { normalizeText } from '../catalog/section.js';
 import { monsterToEntity } from '../catalog/spawn.js';
 import type { Monster } from '../catalog/schema-monster.js';
 
@@ -53,9 +55,34 @@ function spawnOne(template: Monster, id: string, attitude: string) {
   };
 }
 
+function exactMatch(catalog: Catalog, query: string): Monster | undefined {
+  const wanted = normalizeText(query);
+  return catalog.monsters
+    .list()
+    .find((m) => normalizeText(m.id) === wanted || normalizeText(m.name) === wanted);
+}
+
+/** Priority: (1) exact id or name, (2) default family variant, (3) catalog search. */
+function matchTemplates(catalog: Catalog, query: string): readonly Monster[] {
+  const singular = singularQuery(query);
+  const forms = singular ? [query, singular] : [query];
+  for (const form of forms) {
+    const exact = exactMatch(catalog, form);
+    if (exact) return [exact];
+  }
+  for (const form of forms) {
+    const id = DEFAULT_MONSTER_VARIANTS[normalizeText(form)];
+    const template = id ? catalog.monsters.get(id) : undefined;
+    if (template) return [template];
+  }
+  const found = catalog.monsters.find(query);
+  if (found.length > 0 || !singular) return found;
+  return catalog.monsters.find(singular);
+}
+
 /**
  * One catalog match spawns `count` copies. Zero or many matches do not.
- * A plural query is tried as a singular only when the original finds nothing.
+ * No spawn happens while an encounter is active (Stage 7a has no reinforcements).
  */
 export function resolveDndSpawn(
   state: GameState,
@@ -64,11 +91,10 @@ export function resolveDndSpawn(
 ): SpawnResolution {
   const count = DndSpawnCount.parse(request.count);
   const attitude = DndAttitude.parse(request.attitude ?? 'hostile');
-  let matches = catalog.monsters.find(request.query);
-  if (matches.length === 0) {
-    const singular = singularQuery(request.query);
-    if (singular) matches = catalog.monsters.find(singular);
+  if (state.system['encounter'] != null) {
+    return { status: 'combat_active', query: request.query };
   }
+  const matches = matchTemplates(catalog, request.query);
   if (matches.length === 0) return { status: 'not_found', query: request.query };
   if (matches.length > 1) {
     return {

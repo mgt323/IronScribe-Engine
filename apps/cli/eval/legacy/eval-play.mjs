@@ -4,7 +4,7 @@
  * D&D rules together. Each case is a fresh session driven by player lines.
  *
  *   pnpm --filter @iron-scribe/cli build
- *   node apps/cli/bin/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl
+ *   node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl
  *
  * Positive cases check the model did the right thing (spawn count, variant,
  * action alias, skill, narration). Negative cases check it did not (invented
@@ -23,14 +23,14 @@ import {
 } from '@iron-scribe/llm';
 import { loadCatalog } from '@iron-scribe/system-dnd5e-2024';
 
-import { createCliSession, defaultAdventurerSheet, handleCliLine } from '../dist/index.js';
+import { createCliSession, defaultAdventurerSheet, handleCliLine } from '../../dist/index.js';
 import { COMMAND_CASES } from './eval-play-command-cases.mjs';
 import { E2E_CASES } from './eval-play-e2e-cases.mjs';
 import { ACTION_CASES } from './eval-play-action-cases.mjs';
 import { SPAWN_CASES } from './eval-play-cases.mjs';
 import { report } from './eval-play-report.mjs';
 
-const HELP = `Usage: node apps/cli/bin/eval-play.mjs [options]
+const HELP = `Usage: node apps/cli/eval/legacy/eval-play.mjs [options]
   --url <url>          server (default http://127.0.0.1:5001)
   --provider <p>       openai (default) | gemini
   --model <name>       model id (default: detected)
@@ -145,11 +145,14 @@ async function makeClient(o) {
   return { client: createLlmClient(adapter), model };
 }
 
+const EVAL_HERO_HP = 200;
+
 /** One case, one fresh session. Never throws; a thrown turn is a failed case. */
 async function runCase(c, o, client, catalog, run) {
   const session = createCliSession({
     seed: `${o.seed}-${run}`,
-    character: defaultAdventurerSheet(),
+    // Eval only: enough HP that NPC turns never down the hero and mask the model's behavior.
+    character: { ...defaultAdventurerSheet(), hpMax: EVAL_HERO_HP },
     characterName: 'Adventurer',
     llm: client,
     catalog,

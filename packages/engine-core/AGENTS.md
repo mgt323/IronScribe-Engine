@@ -24,11 +24,15 @@ or concrete system packages.
 - `RuleSystem`: `availableActions`, `resolve(state, ResolvedRequest, rng)`,
   optional `runProcedure(state, Procedure, rng)`, optional `applySystemEvent`,
   optional `checkCatalog`, optional `resolveCheckDc(state, CheckDcContext)`,
-  optional `resolveSpawn(state, SpawnRequest)`
+  optional `resolveSpawn(state, SpawnRequest)`, optional `encounterStart`,
+  `nextCombatStep(state, playerId)` (a `CombatStep`: `action` or `procedure`, or
+  null when it is the player's turn, suspended, or over) and `turnEnd(state,
+actorId)` (the procedure that ends a turn taken by acting)
 - `CheckDcContext` is typed (`actorId`, `ability`, `skill`, optional
   `procedureId`, optional `difficulty` band). No free-form model text
 - `SpawnRequest.attitude` is an optional string. The concrete ruleset validates
-  it. `SpawnResolution` is `matched`, `not_found`, or `ambiguous`
+  it. `SpawnResolution` is `matched`, `not_found`, `ambiguous`, or `combat_active` (spawn refused,
+  nothing changed)
 - `Procedure` is `{ kind, ...payload }` with JSON-safe values
 - `EngineError` with a `code`
 

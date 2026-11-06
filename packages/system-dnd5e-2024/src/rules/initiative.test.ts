@@ -75,6 +75,36 @@ describe('initiative (SRD 5.2.1, Initiative)', () => {
     expect(result.facts[0]?.key).toBe('initiative');
   });
 
+  it('monsters sharing a templateRef share one d20; the player wins a full tie', () => {
+    const hero = characterToEntity(sampleCharacter({ abilities: abilities(15) }), 'hero', {
+      name: 'Hero',
+    });
+    const result = rollInitiative(
+      stateWith(hero, monsterToEntity(goblin, 'goblin_1'), monsterToEntity(goblin, 'goblin_2')),
+      createScriptedRng([10, 10]),
+      [],
+      catalog,
+    );
+    expect(result.facts.map((fact) => fact.text)).toEqual([
+      'Hero 12',
+      'Goblin Warrior 12',
+      'Goblin Warrior 12',
+    ]);
+    expect(result.events[0]).toMatchObject({
+      value: {
+        acted: [],
+        order: [{ entityId: 'hero' }, { entityId: 'goblin_1' }, { entityId: 'goblin_2' }],
+      },
+    });
+  });
+
+  it('skips defeated creatures', () => {
+    const hero = characterToEntity(sampleCharacter(), 'hero');
+    const dead = { ...monsterToEntity(goblin, 'goblin_1'), hp: { current: 0, max: 7, temp: 0 } };
+    const result = rollInitiative(stateWith(hero, dead), createScriptedRng([10]), [], catalog);
+    expect(result.facts).toHaveLength(1);
+  });
+
   it('rejects a surprised id that is not in the scene', () => {
     const hero = characterToEntity(sampleCharacter(), 'hero');
     expect(() =>

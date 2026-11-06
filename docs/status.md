@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Combat                                | Not started |
+| 7     | Encounters (7A done; 7B, 7C open)     | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -95,7 +95,8 @@ Done in one chat by explicit choice, an exception to one stage per chat.
   level), initiative
 - Theater of the mind: melee is within 5 feet. Conditional defenses are noted
   and not applied. Monster initiative is Dexterity only
-- Deferred to stage 7: Multiattack, save actions, spells on the menu, NPC
+- Deferred at stage 4 (Multiattack, NPC action choice, turn advancement and the
+  default variant are done in 7A; the rest is in `docs/stage-7-encounters.md`, 7B): Multiattack, save actions, spells on the menu, NPC
   action choice, turn advancement, death saves, exhaustion level 6 death,
   default variant for generic spawn names (see Stage 6 known gap)
 
@@ -119,7 +120,7 @@ Done in one chat by explicit choice, an exception to one stage per chat.
 ## Stage 6 notes
 
 - `@iron-scribe/orchestrator` is the only caller that changes state during play.
-  One player actor. No NPC turns (Stage 7)
+  One player actor. NPC turns run in the combat loop (Stage 7A)
 - Free text is two model calls: an intent (spawn, check, wants an action — no
   aliases and no DC), then a decision from the menu rebuilt after those commits.
   An empty alias list is `null`, never an empty enum
@@ -165,9 +166,8 @@ Done in one chat by explicit choice, an exception to one stage per chat.
 - Intent prompt: a stance or preparation ("I prepare to fight", "I ready my
   dagger") is not an action, so `wantsAction` stays false. Eval case
   `no-attack-on-stance` covers it
-- Combat gaps (Stage 7): enemies are passive. Initiative opens before the first
-  targeted action (`RuleSystem.encounterStart`), but nothing advances turns or
-  picks monster actions. Surprise from a Stealth success is not modelled
+- Combat gaps: superseded by 7A (turns and NPC actions exist). Surprise from a
+  Stealth success is still not modelled; see `docs/stage-7-encounters.md` (7C)
 - The CLI hero is a fixed SRD 5.2.1 Level 1 Rogue (d8, 10 HP, proficiency +2,
   DEX and INT saves, four Rogue skills, Expertise in two). The model may only
   suggest a name and a backstory. The hero is spawned before the orchestrator,
@@ -175,3 +175,36 @@ Done in one chat by explicit choice, an exception to one stage per chat.
 - `pnpm play` takes `--url`, `--provider`, `--model`, `--schema-mode`,
   `--api-key`, and `--seed`. The key may also come from `GEMINI_API_KEY`,
   `GOOGLE_API_KEY`, or `OPENAI_API_KEY`. It is never printed, logged, or saved
+
+## Stage 7A notes (combat loop)
+
+Scope record for 7A and the 7B and 7C backlogs: `docs/stage-7-encounters.md`.
+
+- Initiative order is real. `state.system.encounter` is
+  `{round, turnIndex, acted, order}`. After a player action, the engine runs
+  `RuleSystem.turnEnd` (`advanceTurn`) and then `nextCombatStep` until it returns
+  null (player's turn, suspended, or no encounter). NPCs ahead of the player act
+  before the player's action, also after `/init`. If the player goes down first,
+  their pending action is skipped
+- NPC policy (deterministic, no model): the first menu action against the player.
+  An NPC with no action or a non-hostile NPC still ends its turn. `advanceRound`
+  runs only once everyone has acted
+- `MAX_COMBAT_STEPS = 32`. Past it the whole turn is restored (`engine.restore`)
+  and `combat_loop_exceeded` is thrown
+- Group initiative (SRD): monsters with the same non-null `templateRef` share one
+  d20. Ties: higher total, higher DEX score, player, spawn order. Only living,
+  present creatures roll
+- Suspended vs ended: with the player down and hostiles alive, `encounter` stays
+  and `nextCombatStep` returns null. `endEncounter` runs only when no living
+  present hostile remains, and sets `encounter` to null
+- Multiattack: conservative `expandMultiattack`. Only fixed integer counts with
+  no `options`, every step an attack. Otherwise (Hydra, options) it is not offered.
+  Offered as `monster:multiattack` (A1). Sub-attacks hit one target, run in order
+  on a running state, and stop at 0 HP
+- Spawns are refused during an encounter (`combat_active`); nothing is committed
+- `DEFAULT_MONSTER_VARIANTS` is an Iron Scribe UX policy, not SRD. Priority: exact
+  id/name, default family variant, catalog search. A test checks every target id
+  exists. "goblin" now spawns a Goblin Warrior without a question
+- NPC attack facts use key `npc_attack`: `Name (Action): <roll text>`
+- Out of scope (7B, 7C): death saves, dynamic Hydra heads, multi-target Multiattack,
+  mid-combat spawns, Hide, surprise, scene shifts, spells

@@ -1,5 +1,6 @@
 import type { Rng } from '@iron-scribe/dice';
 import {
+  applyEvents,
   EngineError,
   type CoreEvent,
   type Entity,
@@ -16,6 +17,7 @@ import { attackRoll, weaponAttackBonus } from './attack.js';
 import { readCharacter } from './character.js';
 import { conditionEvents, readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
+import { expandMultiattack, MULTIATTACK_ACTION_ID } from './multiattack.js';
 import { applyDefenses, rollMonsterDamage, rollWeaponDamage, type DamagePart } from './damage.js';
 
 interface PendingAttack {
@@ -69,25 +71,16 @@ function damageFacts(parts: ReturnType<typeof applyDefenses>): Fact[] {
   });
 }
 
-/** One attack from the menu: roll to hit, then damage, then defenses. */
-export function resolveAttack(
+function attackOnce(
   state: GameState,
-  request: ResolvedRequest,
+  attacker: Entity,
+  pending: PendingAttack,
+  defenderId: string,
   rng: Rng,
   catalog: Catalog,
 ): Resolution {
-  const target = request.target;
-  if (!target) throw new EngineError('target_required', 'an attack needs a target');
-  const attacker = entityOf(state, request.actorId);
-  const defender = entityOf(state, target.entityId);
+  const defender = entityOf(state, defenderId);
   const defenderView = readCreature(defender, catalog);
-  const actionId = request.action.actionId;
-  const pending = actionId.startsWith('weapon:')
-    ? weaponAttack(state, request.actorId, actionId.slice('weapon:'.length), rng, catalog)
-    : actionId.startsWith('monster:')
-      ? monsterAttack(attacker, actionId.slice('monster:'.length), rng)
-      : null;
-  if (!pending) throw new EngineError('unknown_alias', `Unknown action: ${actionId}`);
 
   const result = attackRoll(rng, {
     bonus: pending.bonus,
@@ -127,4 +120,61 @@ export function resolveAttack(
     facts.push({ key: 'defeated', text: defender.id });
   }
   return { events, facts };
+}
+
+/** Sub-attacks run in order on a running state against one target and stop at 0 HP. */
+function resolveMultiattack(
+  state: GameState,
+  attacker: Entity,
+  targetId: string,
+  rng: Rng,
+  catalog: Catalog,
+): Resolution {
+  const steps = expandMultiattack(readMonsterSnapshot(attacker).actions);
+  if (steps.length === 0) throw new EngineError('unknown_alias', 'Multiattack is not available');
+  const events: CoreEvent[] = [];
+  const facts: Fact[] = [];
+  let running = state;
+  for (const action of steps) {
+    if (entityOf(running, targetId).hp.current <= 0) break;
+    const part = attackOnce(
+      running,
+      entityOf(running, attacker.id),
+      monsterAttack(attacker, action.id, rng),
+      targetId,
+      rng,
+      catalog,
+    );
+    events.push(...part.events);
+    facts.push(
+      ...part.facts.map((fact) =>
+        fact.key === 'attack' ? { ...fact, text: `${action.name}: ${fact.text}` } : fact,
+      ),
+    );
+    running = applyEvents(running, part.events);
+  }
+  return { events, facts };
+}
+
+/** One attack from the menu: roll to hit, then damage, then defenses. */
+export function resolveAttack(
+  state: GameState,
+  request: ResolvedRequest,
+  rng: Rng,
+  catalog: Catalog,
+): Resolution {
+  const target = request.target;
+  if (!target) throw new EngineError('target_required', 'an attack needs a target');
+  const attacker = entityOf(state, request.actorId);
+  const actionId = request.action.actionId;
+  if (actionId === `monster:${MULTIATTACK_ACTION_ID}`) {
+    return resolveMultiattack(state, attacker, target.entityId, rng, catalog);
+  }
+  const pending = actionId.startsWith('weapon:')
+    ? weaponAttack(state, request.actorId, actionId.slice('weapon:'.length), rng, catalog)
+    : actionId.startsWith('monster:')
+      ? monsterAttack(attacker, actionId.slice('monster:'.length), rng)
+      : null;
+  if (!pending) throw new EngineError('unknown_alias', `Unknown action: ${actionId}`);
+  return attackOnce(state, attacker, pending, target.entityId, rng, catalog);
 }
