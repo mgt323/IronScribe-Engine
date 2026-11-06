@@ -15,8 +15,9 @@ import { readMonsterSnapshot } from '../catalog/spawn.js';
 import type { MonsterAction } from '../catalog/schema-monster.js';
 import { attackRoll, weaponAttackBonus } from './attack.js';
 import { readCharacter } from './character.js';
-import { conditionEvents, readConditions } from './conditions.js';
+import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
+import { downedOutcome } from './death-saves.js';
 import { expandMultiattack, MULTIATTACK_ACTION_ID } from './multiattack.js';
 import { applyDefenses, rollMonsterDamage, rollWeaponDamage, type DamagePart } from './damage.js';
 
@@ -107,15 +108,13 @@ function attackOnce(
   if (total > 0) {
     events.push({ type: 'entity.damaged', entityId: defender.id, amount: total });
   }
-  if (total > 0 && hpAfter === 0 && defenderView.kind === 'character') {
-    events.push(
-      ...conditionEvents(
-        defender,
-        { op: 'add', id: 'unconscious' },
-        defenderView.conditionImmunities,
-      ),
-    );
-    facts.push({ key: 'condition', text: `${defender.id} unconscious` });
+  if (total > 0 && defenderView.kind === 'character') {
+    const downed = downedOutcome(defender, defenderView.conditionImmunities, {
+      total,
+      critical: result.critical,
+    });
+    events.push(...downed.events);
+    facts.push(...downed.facts);
   } else if (total > 0 && hpAfter === 0) {
     facts.push({ key: 'defeated', text: defender.id });
   }

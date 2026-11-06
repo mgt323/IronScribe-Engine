@@ -55,6 +55,18 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
   that lookup is empty (`wolves` → `wolf`). Ambiguous matches are capped at 10.
   Count is 1..10. Attitude is `hostile`, `neutral`, or `friendly` (default
   `hostile`) and is stored on `entity.system.attitude`
+- Dying (7B.1, SRD 5.2.1): `entity.system.deathSaves` is `{successes, failures, stable, dead}`
+  (null = not dying). Reduced to 0 HP: Unconscious plus a fresh tally; a remainder at or above
+  the HP maximum is instant death. Damage at 0 HP: 1 failure (2 on a critical hit), ends
+  stability. Procedure `deathSave { actorId }`: d20 minus 2 per Exhaustion level against DC 10;
+  natural 1 (two failures) and natural 20 (1 HP, wakes) read the unmodified die. 3 successes:
+  stable; 3 failures: dead. `healEvents` wakes a hero at 0 HP. Exhaustion 6 is death
+  (`exhaustionOutcome`). Iron Scribe rules, not SRD: a solo hero (no conscious friendly ally)
+  who stabilizes rests 1d4 hours, regains 1 HP and the encounter ends (no soft-lock, no world
+  clock); hostiles hold their turn against a dying hero so the solo hero rolls saves turn by turn
+  (the dying hero is not on any NPC target list). `combatPhase` is `none | active | dying |
+suspended | dead`; dead keeps the encounter but nothing runs. `playerTurnProcedure` returns the
+  death save, `isActorDefeated` is dead
 - A Stealth check is only the check fact (`Stealth N vs DC …, success|failure`).
   It does not grant Invisible, change Advantage, or spend an action. Hide is
   Stage 7. `resolve-attack.ts` is unchanged

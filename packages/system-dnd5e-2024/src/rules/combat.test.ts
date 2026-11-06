@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { loadCatalog } from '../catalog/catalog.js';
 import { monsterToEntity } from '../catalog/spawn.js';
 import { characterToEntity } from './character.js';
-import { readEncounter } from './combat.js';
+import { combatPhase, readEncounter } from './combat.js';
 import { createDnd5eSystem } from './system.js';
 import { sampleCharacter } from './testing/sample.js';
 
@@ -93,6 +93,64 @@ describe('combat steps', () => {
     expect(readEncounter(state)).not.toBeNull();
     const engine = createEngine({ system, initialState: state });
     expect(() => engine.runProcedure('t', { kind: 'endEncounter' })).toThrow(EngineError);
+  });
+
+  describe('a dying hero', () => {
+    const dying = (tally = { successes: 0, failures: 0, stable: false, dead: false }) =>
+      ({
+        ...hero(),
+        hp: { current: 0, max: 10 },
+        system: {
+          ...hero().system,
+          conditions: { ids: ['unconscious'], exhaustion: 0 },
+          deathSaves: tally,
+        },
+      }) as Entity;
+
+    it('hostiles hold their turn (tactical policy, not SRD); the hero is up on their own turn', () => {
+      const state = scene(['goblin_1', 'hero'], [dying(), gob('goblin_1')]);
+      expect(system.nextCombatStep?.(state, 'hero')).toMatchObject({
+        kind: 'procedure',
+        label: 'Goblin Warrior holds',
+        procedure: { kind: 'advanceTurn' },
+      });
+      const mine = scene(['hero', 'goblin_1'], [dying(), gob('goblin_1')]);
+      expect(system.nextCombatStep?.(mine, 'hero')).toBeNull();
+      expect(system.playerTurnProcedure?.(mine, 'hero')).toEqual({
+        kind: 'deathSave',
+        actorId: 'hero',
+      });
+    });
+
+    it('the round still turns over while the hero is dying', () => {
+      const state = scene(['hero', 'goblin_1'], [dying(), gob('goblin_1')], 2);
+      expect(system.nextCombatStep?.(state, 'hero')).toMatchObject({
+        procedure: { kind: 'advanceRound' },
+      });
+    });
+
+    it('phases: dying, suspended (stable), dead, active, none', () => {
+      const order = ['hero', 'goblin_1'];
+      expect(combatPhase(scene(order, [dying(), gob('goblin_1')]), 'hero')).toBe('dying');
+      const stable = dying({ successes: 0, failures: 0, stable: true, dead: false });
+      expect(combatPhase(scene(order, [stable, gob('goblin_1')]), 'hero')).toBe('suspended');
+      const dead = dying({ successes: 0, failures: 3, stable: false, dead: true });
+      const deadState = scene(order, [dead, gob('goblin_1')]);
+      expect(combatPhase(deadState, 'hero')).toBe('dead');
+      expect(system.isActorDefeated?.(deadState, 'hero')).toBe(true);
+      expect(system.playerTurnProcedure?.(deadState, 'hero')).toBeNull();
+      expect(system.nextCombatStep?.(deadState, 'hero')).toBeNull();
+      expect(readEncounter(deadState)).not.toBeNull();
+      expect(combatPhase(scene(order, [hero(), gob('goblin_1')]), 'hero')).toBe('active');
+      expect(
+        combatPhase(
+          applyEvents(createInitialState({ seed: 1 }), [
+            { type: 'entity.spawned', entity: hero() },
+          ]),
+          'hero',
+        ),
+      ).toBe('none');
+    });
   });
 
   it('ends the encounter only when no living hostile is present', () => {

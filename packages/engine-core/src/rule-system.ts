@@ -132,5 +132,13 @@ export interface RuleSystem {
    * encounter is active. `procedure` combat steps already end their own turn.
    */
   turnEnd?(state: GameState, actorId: EntityId): Procedure | null;
+  /**
+   * The actor's whole turn when they cannot choose from a menu (D&D: a Death Saving
+   * Throw at 0 HP). Non-null means: run this procedure, skip the model, and treat the
+   * player's text as flavor only.
+   */
+  playerTurnProcedure?(state: GameState, actorId: EntityId): Procedure | null;
+  /** True when the actor is out of the game for good (D&D: dead). Terminal. */
+  isActorDefeated?(state: GameState, actorId: EntityId): boolean;
   applySystemEvent?(state: GameState, event: SystemEvent): GameState;
 }

@@ -211,32 +211,33 @@ export const ENGINE_CASES = [
     },
   },
   {
-    id: 'loop-hero-down-suspends',
+    id: 'loop-hero-down-dying',
     category: 'loop',
     tier: 'engine',
-    heroHp: 1,
+    heroHp: 12,
     about:
-      'Hero at 0 HP with hostiles alive: encounter stays, nobody attacks, further input does nothing.',
+      'Hero at 0 HP with hostiles alive: the next input is a death save (no model decision), hostiles hold, the wolves are untouched.',
     steps: async (ctx) => {
       await spawn(ctx, 'wolf 3');
+      // 12 HP so a bite cannot kill outright (massive damage); pinned to 1 so one hit drops the hero.
+      setHp(ctx, HERO, 1);
       pinOrder(ctx, ['wolf_1', 'wolf_2', 'wolf_3', HERO]);
       await ctx.send(ATTACK);
       if (hp(ctx, HERO) > 0) ctx.inconclusive('three wolves all missed');
-      ctx.notes.frozen = JSON.stringify([ctx.state().entities, encounter(ctx)]);
+      ctx.notes.wolves = JSON.stringify(ofKind(ctx, 'wolf'));
       await ctx.send('I attack the wolf.');
       await ctx.send('/status');
     },
     check: (ctx) => {
       const last = says(ctx).at(-1);
+      const keys = factsOf(last).map((f) => f.key);
       return rules(
         [encounter(ctx) !== null, 'encounter ended with hostiles alive'],
-        [last.result.status === 'none', `status ${last.result.status} after hero is down`],
-        [!factsOf(last).some((f) => f.key === 'npc_attack'), 'NPC attacked a fallen hero'],
-        [
-          ctx.notes.frozen === JSON.stringify([ctx.state().entities, encounter(ctx)]),
-          'state moved while suspended',
-        ],
-        [/suspended/.test(cmdOut(ctx, '/status')), '/status does not say suspended'],
+        [keys.includes('death_save'), `no death save after the fall (${keys.join(',')})`],
+        [!keys.includes('npc_attack'), 'NPC attacked a dying hero'],
+        [!keys.includes('attack'), 'a dying hero attacked'],
+        [ctx.notes.wolves === JSON.stringify(ofKind(ctx, 'wolf')), 'a wolf changed'],
+        [/DYING/.test(cmdOut(ctx, '/status')), '/status does not say DYING'],
       );
     },
   },

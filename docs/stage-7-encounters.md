@@ -32,7 +32,23 @@ Design decisions worth remembering:
 - `DEFAULT_MONSTER_VARIANTS` is not SRD. "goblin" now spawns a Goblin Warrior
   with no question; named variants still win; broad families stay ambiguous.
 
-## 7B: combat rules (to do)
+## 7B: combat rules
+
+Phased. 7B.1 is done (below). 7B.2 (spells, save actions, shared dispatcher, AoE, Magic Missile) and
+7B.3 (Multiattack variants, Hydra, recharge, NPC policy) follow.
+
+### 7B.1: done (dying and death saves)
+
+Death saves with Exhaustion on the total (natural 1 and 20 read from the raw die), massive damage,
+damage at 0 HP, healing revival, Exhaustion 6 death, a solo-stable 1d4-hour rest (Iron Scribe rule),
+explicit `combatPhase` (`none | active | dying | suspended | dead`), a dying turn that skips the model
+(player text is narration flavor), natural 20 keeps the turn, and a hero downed before their turn skips
+the declared action. Dead keeps the encounter state and ends all play (not `endEncounter`). Hostiles
+holding against a dying hero is an Iron Scribe policy, not SRD. Item 1 below is covered; item 6's
+orchestrator test lives in `apps/cli/src/dying.test.ts` (a scripted RNG, real D&D rules). Eval:
+`loop-hero-down-dying` replaces `loop-hero-down-suspends`; `e2e-hero-falls` now expects death saves.
+
+Items still open:
 
 Rules the engine still lacks. Nothing here needs new scene concepts.
 

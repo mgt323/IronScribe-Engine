@@ -37,6 +37,12 @@ state except by calling the engine.
   the loop. `MAX_COMBAT_STEPS = 32`; past it the turn is restored and
   `combat_loop_exceeded` thrown. NPC attack facts are key `npc_attack`:
   `Name (Action): <roll text>`. A `combat_active` spawn is a clarification
+- Dying turn: when `system.playerTurnProcedure` returns a procedure, `runTurn` / `runAction` skip
+  intent and decision (no model call but narration). NPCs ahead act, the procedure runs at the start
+  of the hero's turn, and the player's text goes to the narration as flavor only. Still down: the turn
+  ends and NPCs act to the hero's next turn. Back up (natural 20, solo rest) or dead: no `turnEnd`,
+  so a revived hero keeps the turn. `isActorDefeated`: the turn is `none`, no model call. A hero
+  downed by a faster NPC skips the declared action
 - Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules

@@ -10,6 +10,7 @@ import {
   attitude,
   countKey,
   encounter,
+  factsOf,
   hp,
   livingHostiles,
   ofKind,
@@ -92,27 +93,31 @@ export const E2E_CASES = [
     tier: 'full',
     heroHp: 4,
     about:
-      'A frail hero against goblins. If they fall, combat suspends and later input changes nothing.',
+      'A frail hero against goblins. If they fall, later input rolls death saves: nobody attacks and the goblins are untouched.',
     steps: async (ctx) => {
       await ctx.send('Two goblins jump out of the ditch with drawn blades.');
       ctx.notes.result = await fight(ctx, { maxTurns: 10 });
       if (ctx.notes.result.end !== 'down') ctx.inconclusive('hero survived');
-      ctx.notes.frozen = JSON.stringify(ctx.state());
+      ctx.notes.goblins = JSON.stringify(ofKind(ctx, 'goblin-warrior'));
       await ctx.send('I get up and swing at the goblin.');
       await ctx.send('I try to run away.');
     },
-    check: (ctx) =>
-      rules(
-        [JSON.stringify(ctx.state()) === ctx.notes.frozen, 'state changed after the hero fell'],
-        [encounter(ctx) !== null, 'encounter ended while goblins live'],
-        [hp(ctx, HERO) === 0, 'hero hp not 0'],
+    check: (ctx) => {
+      // Each later turn is a death save (or nothing, once the hero is dead). Never an attack.
+      const later = says(ctx).slice(-2);
+      const keys = later.flatMap((t) => factsOf(t).map((f) => f.key));
+      return rules(
+        [ctx.notes.goblins === JSON.stringify(ofKind(ctx, 'goblin-warrior')), 'a goblin changed'],
+        [!keys.includes('attack') && !keys.includes('npc_attack'), 'someone attacked'],
         [
-          says(ctx)
-            .slice(-2)
-            .every((t) => t.result.status === 'none'),
-          'turns after the fall were not "none"',
+          later.every(
+            (t) => factsOf(t).some((f) => f.key === 'death_save') || t.result.status === 'none',
+          ),
+          'a turn after the fall was neither a death save nor "none"',
         ],
-      ),
+        [encounter(ctx) !== null || hp(ctx, HERO) > 0, 'encounter ended with the hero still down'],
+      );
+    },
   },
   {
     id: 'e2e-two-fights',

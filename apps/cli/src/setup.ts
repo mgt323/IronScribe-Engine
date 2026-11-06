@@ -7,8 +7,11 @@ import {
   readCharacter,
   readConditions,
   readCreature,
+  combatPhase,
+  readDeathSaves,
   readEncounter,
   type Catalog,
+  type CombatPhase,
 } from '@iron-scribe/system-dnd5e-2024';
 import { z } from 'zod';
 
@@ -119,6 +122,16 @@ function entityLine(state: GameState, id: string, catalog: Catalog): string {
   return `${entity.name} (${entity.id}) ${String(entity.hp.current)}/${String(entity.hp.max)} HP, AC ${String(view.ac)}${tail}`;
 }
 
+/** Dying and dead are explicit; stable and active heroes need no extra line. */
+function heroStatusLine(state: GameState, actorId: string, phase: CombatPhase): string[] {
+  if (phase === 'dead') return ['Status: DEAD'];
+  if (phase !== 'dying') return [];
+  const tally = readDeathSaves(state.entities[actorId]);
+  return [
+    `Status: DYING (successes ${String(tally?.successes ?? 0)}/3, failures ${String(tally?.failures ?? 0)}/3). Any input rolls your death save.`,
+  ];
+}
+
 /** Present creatures plus the legal A# / T# menu. */
 export function formatSceneStatus(
   state: GameState,
@@ -138,15 +151,17 @@ export function formatSceneStatus(
       ? menu.targets.map((target) => `${target.alias} ${target.label}`)
       : ['(none)'];
   const encounter = readEncounter(state);
+  const phase = combatPhase(state, actorId);
   const combat = encounter
     ? [
         `Combat: round ${String(encounter.round)}` +
-          (menu.actions.length === 0 ? ' (suspended: you cannot act)' : ''),
+          (phase === 'suspended' ? ' (suspended: you cannot act)' : ''),
       ]
     : [];
   return [
     scene.join('\n'),
     ...combat,
+    ...heroStatusLine(state, actorId, phase),
     `You: ${actorId}`,
     `Actions: ${actions.join(', ')}`,
     `Targets: ${targets.join(', ')}`,

@@ -10,6 +10,7 @@ import {
 
 import type { Catalog } from '../catalog/catalog.js';
 import { isIncapacitated, readConditions } from './conditions.js';
+import { isDead, isDying } from './death-saves.js';
 import type { EncounterState } from './initiative.js';
 import { buildMenu } from './menu.js';
 
@@ -43,10 +44,32 @@ const advanceTurn = (label: string): CombatStep => ({
 });
 
 /**
- * The next engine-run step of an active encounter, or null when the player is up,
- * the encounter is suspended (player down while hostiles live), or there is none.
+ * What the player's situation is, for status lines and the CLI.
+ * - `none`: no encounter and the hero is fine
+ * - `active`: an encounter runs and the hero can act
+ * - `dying`: 0 HP, rolling Death Saving Throws on their turns
+ * - `suspended`: the hero cannot act (stable at 0 HP, or incapacitated) and is not dying
+ * - `dead`: terminal; the hero died and nothing more happens
+ */
+export type CombatPhase = 'none' | 'active' | 'dying' | 'suspended' | 'dead';
+
+export function combatPhase(state: GameState, playerId: EntityId): CombatPhase {
+  const player = state.entities[playerId];
+  if (isDead(player)) return 'dead';
+  if (isDying(player)) return 'dying';
+  if (!readEncounter(state)) return 'none';
+  return canAct(player) ? 'active' : 'suspended';
+}
+
+/**
+ * The next engine-run step of an active encounter, or null when the player is up
+ * (to act, or to roll a death save), the encounter is suspended (player cannot act
+ * and is not dying, or is dead), or there is none.
  * An `action` step is followed by `turnEnd`; `procedure` steps end their own turn.
  * NPC policy (Stage 7a): the first menu action against the player. No choices.
+ * Iron Scribe tactical policy (not an SRD rule): an unconscious dying hero is not on
+ * an NPC's target list, so hostiles hold their turn and the solo hero gets to roll
+ * Death Saving Throws turn by turn instead of dying in the same round.
  */
 export function dndNextCombatStep(
   state: GameState,
@@ -58,7 +81,8 @@ export function dndNextCombatStep(
   if (!hasLivingHostiles(state)) {
     return { kind: 'procedure', label: 'End of combat', procedure: { kind: 'endEncounter' } };
   }
-  if (!canAct(state.entities[playerId])) return null;
+  const phase = combatPhase(state, playerId);
+  if (phase === 'dead' || phase === 'suspended') return null;
   if (encounter.turnIndex >= encounter.order.length) {
     return {
       kind: 'procedure',
@@ -74,7 +98,9 @@ export function dndNextCombatStep(
   const menu = buildMenu(state, currentId, catalog);
   const action = menu.actions[0];
   const target = menu.targets.find((entry) => entry.entityId === playerId);
-  if (!action || !target) return advanceTurn(`${name} has no action`);
+  if (!action || !target) {
+    return advanceTurn(phase === 'dying' ? `${name} holds` : `${name} has no action`);
+  }
   return {
     kind: 'action',
     request: { actorId: currentId, actionAlias: action.alias, targetAlias: target.alias },

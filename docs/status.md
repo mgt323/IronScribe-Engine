@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A done; 7B, 7C open)     | In progress |
+| 7     | Encounters (7A, 7B.1 done; rest open) | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -208,3 +208,20 @@ Scope record for 7A and the 7B and 7C backlogs: `docs/stage-7-encounters.md`.
 - NPC attack facts use key `npc_attack`: `Name (Action): <roll text>`
 - Out of scope (7B, 7C): death saves, dynamic Hydra heads, multi-target Multiattack,
   mid-combat spawns, Hide, surprise, scene shifts, spells
+
+## Stage 7B.1 notes (dying and death saves)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- `entity.system.deathSaves` (`{successes, failures, stable, dead}`) is written only by events.
+  `deathSave` is a procedure: d20 minus 2 per Exhaustion level vs DC 10; natural 1 and 20 use the raw
+  die. Instant death on massive damage; damage at 0 HP adds failures; healing wakes; Exhaustion 6 kills
+- Dying turn: `RuleSystem.playerTurnProcedure` makes the hero's turn a death save with no intent or
+  decision call; player text is narration flavor only. Natural 20: no `turnEnd`, the hero keeps the turn.
+  A hero downed by a faster NPC skips the declared action
+- Iron Scribe rules (not SRD): a solo hero who stabilizes rests 1d4 hours, wakes at 1 HP and the
+  encounter ends; hostiles hold against a dying hero
+- `combatPhase`: none, active, dying, suspended (stable or incapacitated), dead (terminal, encounter kept).
+  `/status` shows `Status: DYING (...)` or `Status: DEAD`
+- Tests: `death-saves.test.ts`, `combat.test.ts` (system), `apps/cli/src/dying.test.ts`
+  (scripted RNG, undo/redo). Oracle eval 100%, 0 invariant violations. Live model eval not rerun

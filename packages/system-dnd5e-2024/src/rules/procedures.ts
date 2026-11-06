@@ -14,6 +14,7 @@ import { abilityCheck, savingThrow, skillCheck, type CheckResult } from './check
 import { runCombatProcedure } from './combat.js';
 import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
+import { runDeathSave } from './death-save-roll.js';
 import { rollInitiative } from './initiative.js';
 
 const ABILITY_LABEL: Record<AbilityName, string> = {
@@ -42,6 +43,10 @@ const InitiativeProcedure = z.strictObject({
   kind: z.literal('initiative'),
   surprised: z.array(z.string()),
 });
+const DeathSaveProcedure = z.strictObject({
+  kind: z.literal('deathSave'),
+  actorId: z.string(),
+});
 const CombatProcedure = z.strictObject({
   kind: z.enum(['advanceTurn', 'advanceRound', 'endEncounter']),
 });
@@ -52,6 +57,7 @@ const ProcedureInput = z.discriminatedUnion('kind', [
   CheckProcedure,
   SaveProcedure,
   InitiativeProcedure,
+  DeathSaveProcedure,
 ]);
 
 function skillAbility(catalog: Catalog, skillId: string): AbilityName {
@@ -72,7 +78,7 @@ function actor(state: GameState, actorId: string) {
   return entity;
 }
 
-/** Engine-triggered check, save, or initiative. Payloads are validated on entry. */
+/** Engine-triggered check, save, death save, or initiative. Payloads are validated on entry. */
 export function runDndProcedure(
   state: GameState,
   procedure: Procedure,
@@ -90,6 +96,7 @@ export function runDndProcedure(
     return runCombatProcedure(state, input.kind);
   }
   if (input.kind === 'initiative') return rollInitiative(state, rng, input.surprised, catalog);
+  if (input.kind === 'deathSave') return runDeathSave(state, input.actorId, rng);
 
   const entity = actor(state, input.actorId);
   const view = readCreature(entity, catalog);

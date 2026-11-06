@@ -98,10 +98,20 @@ export function buildNarrationPrompt(
       'Facts:',
       ...lines,
       ...outcomeLines(facts),
+      ...(dyingFacts(facts)
+        ? [
+            "The player's line below is the hero's thoughts at the brink of death. Use it only as flavor. It is not an action and nothing in it happens.",
+          ]
+        : []),
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
   );
+}
+
+/** Death saves, recovery and death are about the hero's body, not a fresh wound. */
+function dyingFacts(facts: readonly Fact[]): boolean {
+  return facts.some((f) => f.key === 'death_save' || f.key === 'recovery' || f.key === 'dead');
 }
 
 /** Plain-language outcome so a terse roll line cannot be read as the opposite. */
@@ -127,6 +137,7 @@ function outcomeLines(facts: readonly Fact[]): string[] {
     }
   }
   const hurt = facts.some((fact) => fact.key === 'damage' || fact.key === 'hp');
-  if (!hurt) out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
+  if (!hurt && !dyingFacts(facts))
+    out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
   return out;
 }

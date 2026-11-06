@@ -102,7 +102,35 @@ export function conditionEvents(
     }
     next = { ids: [...current.ids], exhaustion: change.level };
   }
+  if (next.exhaustion === 6) return exhaustionDeath(entity, next);
   return [{ type: 'entity.systemDataSet', entityId: entity.id, key: 'conditions', value: next }];
+}
+
+/** SRD 5.2.1, "Exhaustion": level 6 is death. A character is unconscious and dead; any creature is at 0 HP. */
+function exhaustionDeath(entity: Entity, next: ConditionState): CoreEvent[] {
+  const isCharacter = entity.system['character'] !== undefined;
+  const ids =
+    isCharacter && !next.ids.includes('unconscious') ? [...next.ids, 'unconscious'] : next.ids;
+  const events: CoreEvent[] = [
+    {
+      type: 'entity.systemDataSet',
+      entityId: entity.id,
+      key: 'conditions',
+      value: { ids, exhaustion: 6 },
+    },
+  ];
+  if (entity.hp.current > 0) {
+    events.push({ type: 'entity.damaged', entityId: entity.id, amount: entity.hp.current });
+  }
+  if (isCharacter) {
+    events.push({
+      type: 'entity.systemDataSet',
+      entityId: entity.id,
+      key: 'deathSaves',
+      value: { successes: 0, failures: 3, stable: false, dead: true },
+    });
+  }
+  return events;
 }
 
 function attackEffects(situation: Extract<RollSituation, { kind: 'attack' }>): RollEffects {

@@ -47,7 +47,8 @@ a name and a backstory. It does not draft scores, hit points, or gear.
 
 ## Combat
 
-`/status` shows `Combat: round N`, with a suspended note when the hero cannot act.
+`/status` shows `Combat: round N`, with a suspended note when the hero cannot act, and
+`Status: DYING (successes S/3, failures F/3)` or `Status: DEAD`. While dying, any input rolls a death save.
 
 ## Test rules
 

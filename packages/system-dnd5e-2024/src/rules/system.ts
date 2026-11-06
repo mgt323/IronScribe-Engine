@@ -4,6 +4,7 @@ import type { Catalog } from '../catalog/catalog.js';
 import { ABILITIES } from '../catalog/schema.js';
 import { resolveDndCheckDc } from './check-dc.js';
 import { dndNextCombatStep, dndTurnEnd } from './combat.js';
+import { dndPlayerTurnProcedure, isDead } from './death-saves.js';
 import { dndEncounterStart } from './encounter-start.js';
 import { buildMenu } from './menu.js';
 import { runDndProcedure } from './procedures.js';
@@ -27,5 +28,7 @@ export function createDnd5eSystem(options: { catalog: Catalog }): RuleSystem {
     encounterStart: (state, actorId) => dndEncounterStart(state, actorId),
     nextCombatStep: (state, playerId) => dndNextCombatStep(state, playerId, catalog),
     turnEnd: (state, actorId) => dndTurnEnd(state, actorId),
+    playerTurnProcedure: (state, actorId) => dndPlayerTurnProcedure(state, actorId),
+    isActorDefeated: (state, actorId) => isDead(state.entities[actorId]),
   };
 }

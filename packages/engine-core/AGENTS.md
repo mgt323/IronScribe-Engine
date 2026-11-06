@@ -27,7 +27,9 @@ or concrete system packages.
   optional `resolveSpawn(state, SpawnRequest)`, optional `encounterStart`,
   `nextCombatStep(state, playerId)` (a `CombatStep`: `action` or `procedure`, or
   null when it is the player's turn, suspended, or over) and `turnEnd(state,
-actorId)` (the procedure that ends a turn taken by acting)
+actorId)` (the procedure that ends a turn taken by acting). Optional
+  `playerTurnProcedure(state, actorId)` (the actor's whole turn when no menu applies,
+  e.g. a death save) and `isActorDefeated(state, actorId)` (terminal: the hero is dead)
 - `CheckDcContext` is typed (`actorId`, `ability`, `skill`, optional
   `procedureId`, optional `difficulty` band). No free-form model text
 - `SpawnRequest.attitude` is an optional string. The concrete ruleset validates

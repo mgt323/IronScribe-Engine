@@ -27,7 +27,22 @@ export {
 export { readCreature, type Creature } from './rules/creature.js';
 export { applyDefenses, rollMonsterDamage, rollWeaponDamage } from './rules/damage.js';
 export { DEFAULT_MONSTER_VARIANTS } from './catalog/overrides.js';
-export { dndNextCombatStep, dndTurnEnd, readEncounter } from './rules/combat.js';
+export {
+  combatPhase,
+  dndNextCombatStep,
+  dndTurnEnd,
+  readEncounter,
+  type CombatPhase,
+} from './rules/combat.js';
+export {
+  DeathSaveState,
+  exhaustionOutcome,
+  healEvents,
+  isDead,
+  isDying,
+  readDeathSaves,
+} from './rules/death-saves.js';
+export { DEATH_SAVE_DC } from './rules/death-save-roll.js';
 export { expandMultiattack } from './rules/multiattack.js';
 export {
   rollInitiative,
