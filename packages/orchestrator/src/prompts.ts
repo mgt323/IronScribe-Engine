@@ -70,7 +70,7 @@ export function buildDecisionPrompt(
       targets,
       '',
       'Choose one legal alias. Use kind "none" and null aliases when nothing legal matches. Do not invent a target.',
-      'Fill secondaryTargetAlias and tertiaryTargetAlias only when the player names several targets, for an action that takes several (an area effect or Magic Missile). Otherwise leave them null. Never repeat a target.',
+      'Fill secondaryTargetAlias and tertiaryTargetAlias only when the player names several targets, for an action that takes several (an area effect or Magic Missile). Otherwise leave them null. The slots are in order, one per dart or sub-attack, so a target may repeat: Magic Missile with two darts on T1 and one on T2 is T1, T1, T2. For an area effect (Burning Hands, a breath) list each affected target once.',
       'An action that needs a target must name one (targetAlias is never null for it). If the player names no target or says "again", use ' +
         (lastTarget
           ? `${lastTarget.alias} (${lastTarget.label}), the last target`

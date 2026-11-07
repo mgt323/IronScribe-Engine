@@ -4,7 +4,7 @@
  * case. A violation is an engine or orchestrator bug, not a model miss.
  */
 import { auditTurn as audit7a } from '../../stage-7a/lib/audit.mjs';
-import { HERO } from './driver.mjs';
+import { HERO, heroRequest } from './driver.mjs';
 
 const SLOT_TOTAL = 2;
 const facts = (turn) => turn.result.facts;
@@ -62,6 +62,26 @@ function slots(turn) {
   return bad;
 }
 
+/** The darts of Magic Missile, per the engine's allocation of the request's slots (SRD 5.2.1). */
+const dartAllocation = (slots) =>
+  [0, 1, 2].map((i) => (slots.length === 2 ? slots[i % 2] : slots[slots.length === 1 ? 0 : i]));
+
+/** A dart `N` strikes the creature in slot `N`; none strikes a creature that was not named. */
+function darts(turn) {
+  const req = heroRequest(turn);
+  if (!has(turn, 'use', /casts Magic Missile/) || !req) return [];
+  const planned = dartAllocation(req.targets);
+  const bad = [];
+  const struck = facts(turn).filter((f) => f.key === 'spell' && /^dart \d+ strikes /.test(f.text));
+  if (struck.length > 3) bad.push(`${struck.length} darts`);
+  for (const f of struck) {
+    const [, n, id] = /^dart (\d+) strikes (.+)$/.exec(f.text) ?? [];
+    if (planned[Number(n) - 1] !== id)
+      bad.push(`dart ${n} struck ${id}, slot says ${planned[n - 1]}`);
+  }
+  return bad;
+}
+
 /** Limited monster actions: an expended action is not used again until it is recharged. */
 function limitedActions(turn) {
   const bad = [];
@@ -99,6 +119,7 @@ export function auditTurn(turn, state) {
     ...filter7a(turn, audit7a(turn, state)),
     ...deathSaves(turn),
     ...slots(turn),
+    ...darts(turn),
     ...limitedActions(turn),
     ...hydra(turn),
   ];

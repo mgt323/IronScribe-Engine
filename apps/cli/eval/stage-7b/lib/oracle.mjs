@@ -14,6 +14,7 @@ const WORDS = [
   ['guard', 'guard', 'friendly'],
 ];
 const COUNTS = { two: 2, three: 3, four: 4 };
+const DART_COUNTS = { one: 1, two: 2, three: 3, 1: 1, 2: 2, 3: 3 };
 const ORDINALS = ['first', 'second', 'third', 'fourth'];
 const SPELLS = [
   [/fire ?bolt|bolt of fire/, /fire bolt/i],
@@ -84,8 +85,16 @@ function decision(scene) {
   const last = scene.match(/use (T\d+) \(/)?.[1];
   const pool = targets.filter((t) => !word || t.toLowerCase().includes(word));
   const nth = ORDINALS.map((o, i) => (line.includes(o) ? i : -1)).filter((i) => i >= 0);
+  // "two darts on the first goblin, one on the second": one slot per dart, repeats kept.
+  const darts = [
+    ...line.matchAll(
+      /\b(one|two|three|[123]) (?:darts? )?(?:on|at|to|into|for) the (first|second|third)/g,
+    ),
+  ].flatMap(([, n, ord]) => Array(DART_COUNTS[n]).fill(pool[ORDINALS.indexOf(ord)]));
   let picked;
-  if (max > 1 && /\b(all|both|each|every|them)\b/.test(line)) picked = pool.slice(0, max);
+  if (/magic missile/i.test(action) && darts.length > 0 && darts.every(Boolean)) {
+    picked = darts.slice(0, max);
+  } else if (max > 1 && /\b(all|both|each|every|them)\b/.test(line)) picked = pool.slice(0, max);
   else if (max > 1 && nth.length) picked = nth.map((i) => pool[i]).filter(Boolean);
   else if (nth.length) picked = [pool[nth[0]]].filter(Boolean);
   else picked = [pool[0] ?? targets.find((t) => t.startsWith(`${last} `)) ?? targets[0]];

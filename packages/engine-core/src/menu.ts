@@ -7,7 +7,7 @@ function aliasesOf(request: ActionRequest): readonly string[] {
     if (request.targetAlias !== null && request.targetAlias !== listed[0]) {
       throw new EngineError('unknown_alias', 'targetAlias must equal the first of targetAliases');
     }
-    return [...new Set(listed)];
+    return listed;
   }
   return request.targetAlias === null ? [] : [request.targetAlias];
 }

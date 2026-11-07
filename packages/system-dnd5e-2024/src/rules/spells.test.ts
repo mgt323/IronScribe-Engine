@@ -14,6 +14,7 @@ import { monsterToEntity } from '../catalog/spawn.js';
 import { characterToEntity } from './character.js';
 import { readDeathSaves } from './death-saves.js';
 import { readSlotsUsed } from './spell-data.js';
+import { dartAllocation } from './spells.js';
 import { createDnd5eSystem } from './system.js';
 import { clericSheet, sorcererSheet } from './testing/sample.js';
 
@@ -181,6 +182,24 @@ describe('Magic Missile darts', () => {
     expect(after('ogre_1')).toBe(hp(state, 'ogre_1') - 2);
     expect(after('ogre_2')).toBe(hp(state, 'ogre_2') - 3);
     expect(after('ogre_3')).toBe(hp(state, 'ogre_3') - 4);
+  });
+
+  it('slots are darts in order: [T1, T1, T2] and [T1, T2, T2] split two and one', () => {
+    const state = scene(sorcerer(), ...ogres());
+    const first = (id: string) => dart(id, state, [1, 2, 3], ['ogre_1', 'ogre_1', 'ogre_2']);
+    expect(first('ogre_1')).toBe(hp(state, 'ogre_1') - (2 + 3));
+    expect(first('ogre_2')).toBe(hp(state, 'ogre_2') - 4);
+    const second = (id: string) => dart(id, state, [1, 2, 3], ['ogre_1', 'ogre_2', 'ogre_2']);
+    expect(second('ogre_1')).toBe(hp(state, 'ogre_1') - 2);
+    expect(second('ogre_2')).toBe(hp(state, 'ogre_2') - (3 + 4));
+  });
+
+  it('dartAllocation: one slot takes all, two fall back to [a, b, a], three are exact', () => {
+    expect(dartAllocation(['a'], 3)).toEqual(['a', 'a', 'a']);
+    expect(dartAllocation(['a', 'b'], 3)).toEqual(['a', 'b', 'a']);
+    expect(dartAllocation(['a', 'a', 'b'], 3)).toEqual(['a', 'a', 'b']);
+    expect(dartAllocation(['a', 'b', 'b'], 3)).toEqual(['a', 'b', 'b']);
+    expect(dartAllocation([], 3)).toEqual([]);
   });
 
   it('two targets take darts one and three, and two', () => {

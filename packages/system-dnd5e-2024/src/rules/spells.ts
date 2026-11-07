@@ -36,10 +36,19 @@ function rollSpellDamage(spell: Spell, sheet: Character, rng: Rng, critical: boo
 }
 
 /**
- * Magic Missile style darts. Dart i goes to targets[i mod n], so one target takes
- * all of them, two take [first, second, first], three take one each. A dart whose
- * target is already at 0 HP is not redirected: no spillover onto unchosen creatures.
+ * Magic Missile style darts, one slot per dart in the order given (a target may repeat:
+ * [T1, T1, T2] is two darts on T1). One slot takes every dart, two slots take
+ * [first, second, first], three or more take one each. A dart whose target is already
+ * at 0 HP is not redirected: no spillover onto unchosen creatures.
  */
+export function dartAllocation(targetIds: readonly string[], darts: number): string[] {
+  if (targetIds.length === 0) return [];
+  if (targetIds.length === 2)
+    return Array.from({ length: darts }, (_, i) => targetIds[i % 2] ?? '');
+  return Array.from({ length: darts }, (_, i) => targetIds[targetIds.length === 1 ? 0 : i] ?? '');
+}
+
+/** Rolls and applies each dart in turn on a running state. */
 function resolveDarts(
   state: GameState,
   spell: Spell,
@@ -51,11 +60,9 @@ function resolveDarts(
   const events: CoreEvent[] = [];
   const facts: Fact[] = [];
   let running = state;
-  const ids = [...new Set(targetIds)];
-  const darts = spell.projectiles ?? 1;
-  for (let dart = 0; dart < darts; dart += 1) {
-    const id = ids[dart % ids.length];
-    if (id === undefined || entityOf(running, id).hp.current <= 0) continue;
+  const ids = dartAllocation(targetIds, spell.projectiles ?? 1);
+  for (const [dart, id] of ids.entries()) {
+    if (entityOf(running, id).hp.current <= 0) continue;
     facts.push({ key: 'spell', text: `dart ${String(dart + 1)} strikes ${id}` });
     const dealt = dealDamage(
       running,

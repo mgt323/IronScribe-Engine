@@ -112,6 +112,38 @@ export const SPELL_CASES = [
       );
     },
   },
+  ...[
+    [
+      'spell-magic-missile-darts-2-1',
+      'two darts on the first goblin, one on the second',
+      [1, 1, 2],
+    ],
+    ['spell-magic-missile-darts-1-2', 'one dart on the first goblin, two on the second', [1, 2, 2]],
+  ].map(([id, say, order]) => ({
+    ...base,
+    id,
+    about: `Magic Missile with a dart split (${say}): the model names a slot per dart, repeats kept, and each dart lands on its slot.`,
+    steps: async (ctx) => {
+      await spawn(ctx, 'goblin 2');
+      await ctx.send(`I cast Magic Missile, ${say}.`, {
+        action: /Magic Missile/,
+        slots: order.map(GOBLIN),
+      });
+    },
+    check: (ctx) => {
+      const struck = allFacts(ctx)
+        .filter((f) => f.key === 'spell' && /^dart \d strikes /.test(f.text))
+        .map((f) => f.text.split(' strikes ')[1]);
+      return rules(
+        [castFacts(ctx, /casts Magic Missile/).length === 1, 'Magic Missile was not cast'],
+        [
+          struck.length === 3 && order.every((n, i) => struck[i] === GOBLIN(n)),
+          `darts struck ${struck}, expected ${order.map(GOBLIN)}`,
+        ],
+        [slotsUsed(ctx) === 1, `slots used ${slotsUsed(ctx)}, expected 1`],
+      );
+    },
+  })),
   {
     ...base,
     id: 'spell-slots-then-dry',

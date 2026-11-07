@@ -95,8 +95,8 @@ export function buildDecisionSchema(menu: ActionMenu): z.ZodType<ActionDecision>
       if (value.secondaryTargetAlias === null && value.tertiaryTargetAlias !== null) {
         issue(ctx, 'tertiaryTargetAlias needs secondaryTargetAlias');
       }
-      if (new Set(aliases).size !== aliases.length) {
-        issue(ctx, 'each target may be named once');
+      if (value.targetAlias === null && value.secondaryTargetAlias !== null) {
+        issue(ctx, 'secondaryTargetAlias needs targetAlias');
       }
       if (action.needsTarget && aliases.length > (action.maxTargets ?? 1)) {
         issue(ctx, `this action takes at most ${String(action.maxTargets ?? 1)} target(s)`);

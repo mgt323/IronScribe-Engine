@@ -106,7 +106,8 @@ export function heroRequest(turn) {
 }
 
 /**
- * expect: { target, action: RegExp, targets: [ids] (set equality), minTargets: n,
+ * expect: { target, action: RegExp, targets: [ids] (set equality), slots: [ids] (exact order,
+ *           repeats kept: one slot per dart), minTargets: n,
  *           none: true (the model must not act) }
  */
 function scoreIntent(ctx, turn, expect) {
@@ -119,6 +120,10 @@ function scoreIntent(ctx, turn, expect) {
   if (expect.targets !== undefined) {
     const got = new Set(req?.targets ?? []);
     add('targets', got.size === expect.targets.length && expect.targets.every((t) => got.has(t)));
+  }
+  if (expect.slots !== undefined) {
+    const got = req?.targets ?? [];
+    add('slots', got.length === expect.slots.length && expect.slots.every((t, i) => got[i] === t));
   }
   if (expect.minTargets !== undefined)
     add('targets', new Set(req?.targets ?? []).size >= expect.minTargets);

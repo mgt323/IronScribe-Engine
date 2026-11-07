@@ -279,3 +279,5 @@ Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024
   hero's action is skipped (like a hero downed first). Used by free text and `/act`
 - Known gap (`e2e-spawn-young-red-dragon`): the model drops "young" from "young red dragon", so the GM asks which dragon
   and the answer is read the same way (7C spawn work)
+- Target slots are per dart or sub-attack: repeats are kept (`T1, T1, T2`). Magic Missile: one slot takes all
+  darts, two give `[a, b, a]`, three are exact. Area saves still hit each creature once (deduplicated)

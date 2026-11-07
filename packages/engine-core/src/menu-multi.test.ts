@@ -51,9 +51,9 @@ describe('validateRequest with several targets', () => {
     expect(resolved.targets.map((t) => t.entityId)).toEqual(['c', 'a', 'b']);
   });
 
-  it('accepts targetAliases alone and drops duplicates', () => {
+  it('accepts targetAliases alone and keeps repeats, one slot each', () => {
     const resolved = validateRequest(menu, request({ targetAliases: ['T2', 'T2', 'T4'] }));
-    expect(resolved.targets.map((t) => t.entityId)).toEqual(['b', 'd']);
+    expect(resolved.targets.map((t) => t.entityId)).toEqual(['b', 'b', 'd']);
   });
 
   it('rejects an unknown alias anywhere in the list', () => {

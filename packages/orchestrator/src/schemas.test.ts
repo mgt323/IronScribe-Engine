@@ -194,12 +194,17 @@ describe('intent and decision schemas', () => {
       expect(pick('A1', 'T1', null, null)).toBe(true);
     });
 
-    it('rejects extra targets on a single-target action, gaps, repeats and targets on a no-target action', () => {
+    it('rejects extra targets on a single-target action, gaps and targets on a no-target action', () => {
       expect(pick('A1', 'T1', 'T2', null)).toBe(false);
       expect(pick('A2', 'T1', null, 'T3')).toBe(false);
-      expect(pick('A2', 'T1', 'T1', null)).toBe(false);
       expect(pick('A3', null, 'T2', null)).toBe(false);
       expect(pick('A2', null, 'T2', null)).toBe(false);
+    });
+
+    it('allows a repeated target: one slot per dart or sub-attack', () => {
+      expect(pick('A2', 'T1', 'T1', 'T2')).toBe(true);
+      expect(pick('A2', 'T1', 'T2', 'T2')).toBe(true);
+      expect(pick('A2', 'T1', 'T1', 'T1')).toBe(true);
     });
 
     it('stays flat: no arrays, every field required', () => {
