@@ -12,7 +12,7 @@ export function monsterToEntity(
     id: entityId,
     name: options?.name ?? template.name,
     templateRef: `srd-5.2.1:monster:${template.id}`,
-    present: true,
+    proximity: 'engaged',
     hp: { current: template.hp, max: template.hp },
     // Full snapshot: later data refreshes cannot change monsters already in a save.
     system: { monster: template },

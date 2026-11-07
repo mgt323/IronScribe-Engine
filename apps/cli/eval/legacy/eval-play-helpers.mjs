@@ -10,7 +10,7 @@ export const stateOf = (ctx) => engineOf(ctx).state;
 
 /** Present creatures other than the hero. */
 export const others = (ctx) =>
-  Object.values(stateOf(ctx).entities).filter((e) => e.id !== HERO && e.present);
+  Object.values(stateOf(ctx).entities).filter((e) => e.id !== HERO && e.proximity !== 'gone');
 
 export const monsters = (ctx, id) => others(ctx).filter((e) => baseId(e.id) === id);
 

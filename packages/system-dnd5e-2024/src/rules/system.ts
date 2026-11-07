@@ -25,7 +25,21 @@ export function createDnd5eSystem(options: { catalog: Catalog }): RuleSystem {
     runProcedure: (state, procedure, rng) => runDndProcedure(state, procedure, rng, catalog),
     resolveCheckDc: (state, context) => resolveDndCheckDc(state, context),
     resolveSpawn: (state, request) => resolveDndSpawn(state, request, catalog),
-    encounterStart: (state, actorId) => dndEncounterStart(state, actorId),
+    encounterStart: (state, actorId) => dndEncounterStart(state, actorId, catalog),
+    afterSpawn: (state, entityIds) => {
+      const encounter = state.system['encounter'];
+      if (encounter == null || typeof encounter !== 'object') return null;
+      const order = (encounter as { order?: { entityId: string }[] }).order ?? [];
+      const joining = entityIds.filter((id) => {
+        const entity = state.entities[id];
+        return (
+          entity?.proximity === 'engaged' &&
+          entity.hp.current > 0 &&
+          !order.some((entry) => entry.entityId === id)
+        );
+      });
+      return joining.length > 0 ? { kind: 'joinEncounter', entityIds: [...joining] } : null;
+    },
     nextCombatStep: (state, playerId) => dndNextCombatStep(state, playerId, catalog),
     turnEnd: (state, actorId) => dndTurnEnd(state, actorId),
     playerTurnProcedure: (state, actorId) => dndPlayerTurnProcedure(state, actorId),

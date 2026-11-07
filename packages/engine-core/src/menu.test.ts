@@ -7,14 +7,14 @@ import type { ActionRequest, ResolvedRequest, RuleSystem } from './rule-system.j
 import { createInitialState } from './state.js';
 import { createFakeSystem, makeEntity } from './testing/fake-system.js';
 
-const spawn = (id: string, present = true): CoreEvent => ({
+const spawn = (id: string, proximity: 'engaged' | 'gone' = 'engaged'): CoreEvent => ({
   type: 'entity.spawned',
-  entity: makeEntity(id, { present }),
+  entity: makeEntity(id, { proximity }),
 });
 
 function setup(system: RuleSystem = createFakeSystem()): Engine {
   const engine = createEngine({ system, initialState: createInitialState({ seed: 7 }) });
-  engine.commit('setup', [spawn('hero'), spawn('goblin'), spawn('ghost', false)]);
+  engine.commit('setup', [spawn('hero'), spawn('goblin'), spawn('ghost', 'gone')]);
   return engine;
 }
 

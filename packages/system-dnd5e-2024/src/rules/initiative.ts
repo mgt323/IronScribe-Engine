@@ -64,7 +64,7 @@ function memberOf(
  * SRD 5.2.1, "Initiative": a Dexterity check. Surprised creatures roll with
  * disadvantage. Identical monsters (same `templateRef`) share one roll. Ties break
  * by higher Dexterity score, then the player character, then spawn order.
- * Only living, present creatures take part.
+ * Only living, engaged creatures take part. Nearby creatures stay out of the order.
  */
 export function rollInitiative(
   state: GameState,
@@ -79,7 +79,7 @@ export function rollInitiative(
   const members: Member[] = [];
   for (const [spawnIndex, entityId] of state.spawnOrder.entries()) {
     const entity = state.entities[entityId];
-    if (!entity?.present || entity.hp.current <= 0) continue;
+    if (entity?.proximity !== 'engaged' || entity.hp.current <= 0) continue;
     members.push(memberOf(entity, spawnIndex, surprisedIds, catalog));
   }
   const groupRolls = new Map<string, { total: number; mode: string }>();

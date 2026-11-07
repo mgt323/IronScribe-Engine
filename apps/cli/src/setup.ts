@@ -139,9 +139,14 @@ export function formatSceneStatus(
   catalog: Catalog,
   menu: ActionMenu,
 ): string {
-  const present = state.spawnOrder.filter((id) => state.entities[id]?.present === true);
-  const scene =
-    present.length > 0 ? present.map((id) => entityLine(state, id, catalog)) : ['(nobody)'];
+  const present = state.spawnOrder.filter((id) => state.entities[id]?.proximity === 'engaged');
+  const nearby = state.spawnOrder.filter((id) => state.entities[id]?.proximity === 'nearby');
+  const scene = [
+    ...(present.length > 0 ? present.map((id) => entityLine(state, id, catalog)) : ['(nobody)']),
+    ...(nearby.length > 0
+      ? ['Nearby (not engaged):', ...nearby.map((id) => entityLine(state, id, catalog))]
+      : []),
+  ];
   const actions =
     menu.actions.length > 0
       ? menu.actions.map((action) => `${action.alias} ${action.label}`)

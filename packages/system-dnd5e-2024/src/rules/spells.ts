@@ -16,6 +16,7 @@ import { readCharacter, type Character } from './character.js';
 import { dealDamage, entityOf } from './deal-damage.js';
 import { rollDice, type DamagePart } from './damage.js';
 import { healEvents } from './death-saves.js';
+import { breakHideEvents } from './hide.js';
 import { attackOnce } from './resolve-attack.js';
 import { resolveSaveEffect } from './resolve-save.js';
 import {
@@ -166,5 +167,9 @@ export function resolveSpell(
   } else {
     throw new EngineError('unknown_alias', `${spell.name} cannot be resolved`);
   }
-  return { events: [...events, ...part.events], facts: [...facts, ...part.facts] };
+  const spoken = spell.verbal && spell.resolution !== 'attack' ? breakHideEvents(caster) : [];
+  return {
+    events: [...events, ...part.events, ...spoken],
+    facts: [...facts, ...part.facts],
+  };
 }

@@ -20,6 +20,7 @@ export interface OpenSlot {
   readonly query: string;
   readonly count: number;
   readonly attitude: string;
+  readonly proximity: 'engaged' | 'nearby';
 }
 
 export interface MatchedGroup {
@@ -90,6 +91,7 @@ export function filledSlots(intent: TurnIntent): OpenSlot[] {
       query,
       count: slot.count,
       attitude: slot.attitude,
+      proximity: slot.proximity === 'nearby' ? 'nearby' : 'engaged',
     });
   }
   filled.forEach((slot, index) => {
@@ -117,6 +119,26 @@ function overlay(state: GameState, entities: readonly Entity[]): GameState {
 
 function creaturesOf(matched: readonly MatchedGroup[]): Entity[] {
   return matched.flatMap((group) => [...group.entities]);
+}
+
+/** Commits the creatures, then lets engaged reinforcements join an active encounter. */
+export function commitSpawn(
+  ctx: { engine: Engine; system: RuleSystem },
+  entities: readonly Entity[],
+  facts: readonly Fact[],
+): Fact[] {
+  if (entities.length === 0) return [...facts];
+  ctx.engine.commit(
+    'spawn',
+    entities.map((entity) => ({ type: 'entity.spawned' as const, entity })),
+  );
+  const procedure =
+    ctx.system.afterSpawn?.(
+      ctx.engine.state,
+      entities.map((entity) => entity.id),
+    ) ?? null;
+  const joined = procedure ? ctx.engine.runProcedure('reinforcements', procedure).facts : [];
+  return [...facts, ...joined];
 }
 
 /**
@@ -153,6 +175,7 @@ export function spawnFrom(
       query: slot.query,
       count: slot.count,
       attitude: slot.attitude,
+      proximity: slot.proximity,
       turnTotal,
     });
     if (resolution.status === 'matched') {
@@ -173,12 +196,12 @@ export function spawnFrom(
 
   const entities = creaturesOf(matched);
   if (entities.length === 0) return { facts: [], clarification: null, progress: null };
-  ctx.engine.commit(
-    'spawn',
-    entities.map((entity) => ({ type: 'entity.spawned' as const, entity })),
-  );
   return {
-    facts: matched.flatMap((group) => [...group.facts]),
+    facts: commitSpawn(
+      ctx,
+      entities,
+      matched.flatMap((group) => [...group.facts]),
+    ),
     clarification: null,
     progress: null,
   };

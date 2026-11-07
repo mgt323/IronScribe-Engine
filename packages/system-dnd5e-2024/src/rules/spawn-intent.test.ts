@@ -78,16 +78,24 @@ describe('resolveDndSpawn', () => {
     expect(ids('giant')).toBe('ambiguous');
   });
 
-  it('refuses to spawn while an encounter is active and changes nothing', () => {
+  it('spawns a reinforcement during an encounter, and can leave one nearby', () => {
     const active = {
       ...state,
       system: { encounter: { round: 1, turnIndex: 0, acted: [], order: [] } },
     };
-    expect(resolveDndSpawn(active, { query: 'wolf', count: 1 }, catalog)).toEqual({
-      status: 'combat_active',
-      query: 'wolf',
-    });
+    const joined = resolveDndSpawn(active, { query: 'wolf', count: 1 }, catalog);
+    expect(joined.status).toBe('matched');
+    if (joined.status !== 'matched') return;
+    expect(joined.entities[0]?.proximity).toBe('engaged');
     expect(active.spawnOrder).toEqual([]);
+    const waiting = resolveDndSpawn(
+      active,
+      { query: 'wolf', count: 1, proximity: 'nearby' },
+      catalog,
+    );
+    expect(waiting.status).toBe('matched');
+    if (waiting.status !== 'matched') return;
+    expect(waiting.entities[0]?.proximity).toBe('nearby');
   });
 
   it('caps a long ambiguous list at 10', () => {

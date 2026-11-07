@@ -81,6 +81,8 @@ export interface SpawnRequest {
    * Absent means this request is the whole turn. The rules reject a total above their cap.
    */
   readonly turnTotal?: number;
+  /** `engaged` joins a fight. `nearby` stays in the area until the rules escalate them. Default engaged. */
+  readonly proximity?: 'engaged' | 'nearby';
 }
 
 export interface SpawnCandidate {
@@ -138,6 +140,11 @@ export interface RuleSystem {
   resolveCheckDc?(state: GameState, context: CheckDcContext): number;
   /** Name a catalog entry. 0 or many matches ask the user; one match returns entities to spawn. */
   resolveSpawn?(state: GameState, request: SpawnRequest): SpawnResolution;
+  /**
+   * After a spawn commits during an encounter. Returns the procedure that adds
+   * engaged reinforcements to the existing order, or null when nobody joins.
+   */
+  afterSpawn?(state: GameState, entityIds: readonly EntityId[]): Procedure | null;
   /**
    * Called before a targeted action. Returns the procedure that opens combat
    * (e.g. initiative) when the action starts a fight that is not under way yet.

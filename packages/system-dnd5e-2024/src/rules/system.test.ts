@@ -211,10 +211,17 @@ describe('procedures, undo and replay', () => {
     expect(commit.events.some((event) => event.type === 'rng.advanced')).toBe(true);
   });
 
-  it('a stealth check is only a fact: no Invisible, and the attack is unchanged', () => {
+  it('stealth during a fight is only a fact unless Hide is legal', () => {
     const initial = createInitialState({ seed: 'stealth' });
     const engine = createEngine({ system, initialState: initial });
-    engine.commit('spawn', [{ type: 'entity.spawned', entity: heroEntity() }]);
+    engine.commit('spawn', [
+      { type: 'entity.spawned', entity: heroEntity() },
+      {
+        type: 'state.systemDataSet',
+        key: 'encounter',
+        value: { round: 1, turnIndex: 0, acted: [], order: [] },
+      },
+    ]);
     const check = engine.runProcedure('check', {
       kind: 'check',
       actorId: 'hero',

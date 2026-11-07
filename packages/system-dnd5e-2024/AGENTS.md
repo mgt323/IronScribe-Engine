@@ -31,7 +31,7 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
 - Menu: `weapon:<id>` for each carried weapon, then character spells (below); `monster:<actionId>` for each
   melee or ranged monster attack, with `monster:multiattack` first when
   `expandMultiattack` accepts it (fixed integer steps, no options, all attacks), then supported
-  monster save actions. Targets are other present creatures above 0 HP.
+  monster save actions. Targets are other engaged creatures above 0 HP.
   Incapacitated creatures (including paralyzed, stunned, unconscious) offer nothing
 - `resolve` is `resolveAction` (`resolve-action.ts`), the one dispatcher: weapon and monster attacks,
   Multiattack, monster save actions, character spells. An attack rolls to hit, then damage, then
@@ -49,11 +49,17 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
   `initiative` gives one shared d20 per `templateRef` (ties: total, DEX score,
   player, spawn order). Procedures `advanceTurn`, `advanceRound`, `endEncounter`
   are dice-free. `nextCombatStep` has NPCs follow `chooseNpcAction` (`npc-policy.ts`); null means the player is up or combat is suspended (player down,
-  hostiles alive). `endEncounter` only when no living present hostile remains
+  hostiles alive). `endEncounter` only when no living engaged hostile remains.
+  A nearby hostile is pulled in (`engageNearby`) before that check, rolls
+  initiative, and is inserted into the order: the current turn stays put, and
+  anyone inserted earlier in the round is marked acted. `afterSpawn` does the
+  same for an engaged reinforcement (`joinEncounter`). A `templateRef` already
+  in the order keeps that roll
 - `resolveSpawn` priority: exact id/name, `DEFAULT_MONSTER_VARIANTS` (an Iron
-  Scribe UX policy, not SRD), then `catalog.monsters.find`. Refused with
-  `combat_active` during an encounter. A plural is singularized only when
-  that lookup is empty (`wolves` → `wolf`). Ambiguous matches are capped at 10.
+  Scribe UX policy, not SRD), then `catalog.monsters.find`. A spawn during an
+  encounter is a reinforcement (`proximity` `nearby` waits to be engaged).
+  A plural is singularized only when that lookup is empty (`wolves` → `wolf`).
+  Ambiguous matches are capped at 10.
   Count is 1..10. Attitude is `hostile`, `neutral`, or `friendly` (default
   `hostile`) and is stored on `entity.system.attitude`. `SpawnRequest.turnTotal`,
   when set, is the sum of every spawn count in the turn and must be from the
@@ -89,9 +95,17 @@ catalog, allowlist?)`. Spent slots are `entity.system.spellSlotsUsed` (`{ "1": 1
   (`{ expended, counts }`, `usage.ts`) records limited actions: recharge and per-rest actions become
   expended after one use, per-day actions count uses. Recharge rolls are 7B.3, so an expended
   action stays off the menu until then. Monster Spellcasting is not on the menu yet
-- A Stealth check is only the check fact (`Stealth N vs DC …, success|failure`).
-  It does not grant Invisible, change Advantage, or spend an action. Hide is
-  Stage 7. `resolve-attack.ts` is unchanged
+- Hide (7C.3, SRD 5.2.1): a Stealth check is Hide at DC 15 before combat, or
+  during combat when `entity.system.canHide` is true or `unawareOf` is a
+  non-empty list of ids (cover and heavy obscurement are Stage 8). Success
+  grants Invisible and stores the total on `entity.system.hiddenStealthDc`.
+  An opponent whose Passive Perception meets that total spots them immediately.
+  Hide ends when the creature makes an attack roll, casts a verbal spell, or
+  an opponent's Perception check (Search) meets the total. Other Stealth checks
+  stay a fact only. Surprise is Disadvantage on initiative; Invisible is
+  Advantage; both together are a normal roll (`resolveRollMode`).
+  `encounterStart` puts opponents below the Hide total, and ids in `unawareOf`,
+  on the `surprised` list
 - Pure helpers: `abilityModifier`, `proficiencyBonus`, `abilityCheck`,
   `skillCheck`, `savingThrow`, `attackRoll`, `weaponAttackBonus`,
   `rollWeaponDamage`, `rollMonsterDamage`, `applyDefenses`, `rollInitiative`,

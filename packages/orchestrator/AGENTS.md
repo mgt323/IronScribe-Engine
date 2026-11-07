@@ -31,7 +31,7 @@ state except by calling the engine.
   the partial text and sets `narrationError`. The mechanics stay committed
 - `buildIntentSchema` / `buildDecisionSchema` are flat. An empty alias list is
   `z.null()`, never `z.enum([])`. Intent has no aliases and no DC. `spawnIsNew` is required and comes first: when it is false the spawn fields are ignored, so "a goblin" for one already present spawns nothing
-- Mixed spawns (7C.2): three slots, `spawn1` … `spawn3`, each query, count and attitude, all required and nullable. Slots are filled in order. Each count is 1..10 and the sum is at most 10. `spawnFrom` resolves every slot, then commits them as one `spawn`. An ambiguous slot is kept on the orchestrator with the original line, the check, `wantsAction`, the creatures already matched, and the slots still open. The reply is matched against those candidates (exact id or name, or tokens that fit exactly one) and the intent model is not called. The next ambiguous slot is asked the same way. Then the stored check or action runs. A reply that fits none or several is a new turn
+- Mixed spawns (7C.2, proximity in 7C.3): three slots, `spawn1` … `spawn3`, each query, count, attitude and proximity (`engaged` or `nearby`), all required and nullable. A null proximity on a filled slot is engaged. Slots are filled in order. Each count is 1..10 and the sum is at most 10. `spawnFrom` resolves every slot, then commits them as one `spawn`. Engaged creatures spawned during an encounter join that order (`afterSpawn`). An ambiguous slot is kept on the orchestrator with the original line, the check, `wantsAction`, the creatures already matched, and the slots still open. The reply is matched against those candidates (exact id or name, or tokens that fit exactly one) and the intent model is not called. The next ambiguous slot is asked the same way. Then the stored check or action runs. A reply that fits none or several is a new turn
 - Combat loop (`combat.ts`): `runPlayerTurn` opens the encounter, runs
   `advanceCombatUntilPlayer` (NPCs ahead of the player), skips the player's action
   if they went down, then calls `turnEnd` and the loop again. `/init` also runs
@@ -51,7 +51,7 @@ state except by calling the engine.
   prompt marks actions that take several targets. Narration prompt turns `save` facts into plain
   `Outcome:` lines. NPC facts: only `attack` becomes `npc_attack`; spells and save actions add a
   `use` fact (`<id> uses Acid Breath`)
-- Narration prompt (7C.1, `prompts.ts`, `outcomes.ts`): "Creatures in scene" lists present creatures only. Only
+- Intent prompt lists `Present` (engaged) and `Nearby (not engaged)`. `spawnIsNew` is false for either list. Narration prompt (7C.1, `prompts.ts`, `outcomes.ts`): "Creatures in scene" lists engaged creatures only. Only
   they may be shown as here, acting or touching anything; off-screen or backstory people may appear as memory
   only when the player line or facts establish them; a creature the engine did not spawn never enters, even if
   the player names it. The player line is labelled tone and intent only. Inner states (notices, feels, intends)

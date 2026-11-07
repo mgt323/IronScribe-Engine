@@ -79,6 +79,7 @@ function slotFields(hits) {
     fields[`spawn${n}Query`] = hit?.query ?? null;
     fields[`spawn${n}Count`] = hit?.count ?? null;
     fields[`spawn${n}Attitude`] = hit?.attitude ?? null;
+    fields[`spawn${n}Proximity`] = null;
   }
   return fields;
 }

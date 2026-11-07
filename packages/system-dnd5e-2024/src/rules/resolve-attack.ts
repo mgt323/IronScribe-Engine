@@ -16,6 +16,7 @@ import { readCharacter } from './character.js';
 import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
 import { dealDamage, entityOf } from './deal-damage.js';
+import { breakHideEvents } from './hide.js';
 import { rollMonsterDamage, rollWeaponDamage, type DamagePart } from './damage.js';
 
 export interface PendingAttack {
@@ -78,7 +79,8 @@ export function attackOnce(
   const facts: Fact[] = [
     { key: 'attack', text: `${String(result.total)} vs AC ${String(result.ac)}, ${outcome}` },
   ];
-  if (!result.hit) return { events: [], facts };
+  const revealed = breakHideEvents(attacker);
+  if (!result.hit) return { events: revealed, facts };
 
   const dealt = dealDamage(
     state,
@@ -88,7 +90,7 @@ export function attackOnce(
     catalog,
   );
   facts.push(...dealt.facts);
-  return { events: [...dealt.events], facts };
+  return { events: [...dealt.events, ...revealed], facts };
 }
 
 /** One attack from the menu: roll to hit, then damage, then defenses. */

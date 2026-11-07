@@ -9,7 +9,11 @@ or concrete system packages.
 ## Public interface
 
 - `createInitialState({ seed })`, `GameState` (`rng`, `entities`, `spawnOrder`,
-  global `system` bag), `Entity` (hp, per-entity `system` bag)
+  global `system` bag), `Entity` (hp, per-entity `system` bag, `proximity`:
+  `engaged` | `nearby` | `gone`). `engaged` is an encounter participant, not
+  melee reach. `nearby` is in the area but not in the fight. `gone` has left.
+  `entity.presenceSet` writes `proximity`. An actor who is `gone` is
+  `actor_not_present`
 - `createEngine({ system, initialState })` -> `Engine`: `state`, `commits`,
   `canUndo`, `canRedo`, `menu(actorId)`, `perform(ActionRequest)`,
   `runProcedure(label, Procedure)`, `commit(label, events)` (request and
@@ -40,8 +44,11 @@ actorId)` (the procedure that ends a turn taken by acting). Optional
   `procedureId`, optional `difficulty` band). No free-form model text
 - `SpawnRequest.attitude` is an optional string. The concrete ruleset validates
   it. Optional `turnTotal` is the sum of every spawn count in the turn (this
-  request included); absent means this request is the whole turn. `SpawnResolution` is `matched`, `not_found`, `ambiguous`, or `combat_active` (spawn refused,
-  nothing changed)
+  request included); absent means this request is the whole turn. Optional
+  `proximity` is `engaged` (default) or `nearby`. `SpawnResolution` is `matched`,
+  `not_found`, `ambiguous`, or `combat_active` (spawn refused, nothing changed).
+  Optional `afterSpawn(state, entityIds)` returns a procedure that adds engaged
+  reinforcements to an encounter already under way, or null
 - `Procedure` is `{ kind, ...payload }` with JSON-safe values
 - `EngineError` with a `code`
 

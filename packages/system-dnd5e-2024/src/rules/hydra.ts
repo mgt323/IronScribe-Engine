@@ -89,7 +89,7 @@ export function hydraTurnEnd(
   const facts: Fact[] = [];
   for (const id of state.spawnOrder) {
     const hydra = state.entities[id];
-    const prev = hydra?.present ? readHydraState(hydra) : null;
+    const prev = hydra?.proximity === 'engaged' ? readHydraState(hydra) : null;
     if (!hydra || !prev) continue;
     let next: HydraState = { ...prev, damageThisTurn: 0 };
     if (id === endingId && hydra.hp.current > 0 && prev.heads > 0) {

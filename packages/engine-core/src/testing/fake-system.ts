@@ -16,7 +16,7 @@ export function makeEntity(id: string, overrides: Partial<Entity> = {}): Entity 
     id,
     name: id,
     templateRef: null,
-    present: true,
+    proximity: 'engaged',
     hp: { current: 10, max: 10 },
     system: {},
     ...overrides,
@@ -66,7 +66,7 @@ export function createFakeSystem(options: { withReducer?: boolean } = {}): RuleS
     id: 'fake',
     availableActions(state: GameState, actorId: string): ActionMenu {
       const targets = state.spawnOrder
-        .filter((id) => id !== actorId && state.entities[id]?.present === true)
+        .filter((id) => id !== actorId && state.entities[id]?.proximity === 'engaged')
         .map((id, i) => ({
           alias: `T${String(i + 1)}`,
           entityId: id,

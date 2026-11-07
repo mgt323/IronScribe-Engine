@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A, 7B, 7C.1, 7C.2 done)  | In progress |
+| 7     | Encounters (7A, 7B, 7C done)          | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -201,7 +201,7 @@ Scope record for 7A and the 7B and 7C backlogs: `docs/stage-7-encounters.md`.
   no `options`, every step an attack. Otherwise (Hydra, options) it is not offered.
   Offered as `monster:multiattack` (A1). Sub-attacks hit one target, run in order
   on a running state, and stop at 0 HP
-- Spawns are refused during an encounter (`combat_active`); nothing is committed
+- Spawns during an encounter were refused in 7A (`combat_active`). 7C.3 admits them as reinforcements
 - `DEFAULT_MONSTER_VARIANTS` is an Iron Scribe UX policy, not SRD. Priority: exact
   id/name, default family variant, catalog search. A test checks every target id
   exists. "goblin" now spawns a Goblin Warrior without a question
@@ -305,4 +305,12 @@ Scope record: `docs/stage-7-encounters.md`.
 - One turn commits every matched slot together. An ambiguous slot is stored with the original line, the check, `wantsAction`, the slots already matched, and the slots still open. The reply is matched against that candidate list and the intent model is not called again. The next ambiguous slot is asked the same way, then the stored check or action runs
 - A reply matches one candidate when it equals that id or name (leading "the"/"a"/"an", punctuation and hyphens ignored), or when its tokens fit exactly one candidate. Zero or several matches are not guessed
 - Eval: `e2e-spawn-mixed-group` (a wolf and a bandit). `e2e-spawn-young-red-dragon` counts again. Oracle eval 100% on the 7A and 7B suites, 0 invariant violations. Live model eval not rerun
-- Next: 7C.3 (proximity, reinforcements, Hide and surprise)
+
+## Stage 7C.3 notes (proximity, reinforcements, Hide, surprise)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- `Entity.proximity` is `engaged | nearby | gone` and replaces `present`. `engaged` means an encounter participant (targets and initiative), not melee reach. `nearby` is in the area and listed as `Nearby (not engaged)` so `spawnIsNew` does not spawn them again. `gone` has left. Combat, initiative and the narration scene list use `engaged`. A friendly ally still in the area (`engaged` or `nearby`) counts for the solo-hero rest
+- Intent slots gained `spawnNProximity` (`engaged` or `nearby`, null on an empty slot, null on a filled slot means engaged). A spawn during an encounter is a reinforcement. `afterSpawn` runs `joinEncounter`: a `templateRef` already in the order keeps that roll; newcomers slot into the existing order; the current turn stays on the same creature; anyone inserted earlier this round is marked acted. A nearby hostile is pulled in by `engageNearby` the same way once a fight exists
+- Hide (SRD 5.2.1) is a Dexterity (Stealth) check vs DC 15, legal before combat or when `canHide` or a non-empty `unawareOf` is set (cover and obscurement are Stage 8). Success grants Invisible and stores the total on `hiddenStealthDc`, unless an opponent's Passive Perception meets it. An attack roll, a verbal spell, or a Search (Perception vs that total) ends it. Surprised creatures have Disadvantage on initiative, Invisible creatures have Advantage, and both together are a normal roll. `encounterStart` surprises opponents below the Hide total and anyone listed in `unawareOf`
+- Eval: `flow-reinforcement-joins` replaces the old mid-combat refusal. Oracle eval 100% on the 7A and 7B suites, 0 invariant violations. Live model eval not rerun

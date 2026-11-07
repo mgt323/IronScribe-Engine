@@ -63,7 +63,7 @@ export function createEngine(options: { system: RuleSystem; initialState: GameSt
     if (!actor) {
       throw new EngineError('unknown_entity', `Unknown actor: ${actorId}`);
     }
-    if (!actor.present) {
+    if (actor.proximity === 'gone') {
       throw new EngineError('actor_not_present', `Actor not present: ${actorId}`);
     }
   };

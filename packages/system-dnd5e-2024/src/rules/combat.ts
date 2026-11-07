@@ -25,7 +25,17 @@ export function readEncounter(state: GameState): EncounterState | null {
 
 function livingHostile(entity: Entity | undefined): boolean {
   return (
-    entity?.present === true && entity.hp.current > 0 && entity.system['attitude'] === 'hostile'
+    entity?.proximity === 'engaged' &&
+    entity.hp.current > 0 &&
+    entity.system['attitude'] === 'hostile'
+  );
+}
+
+function nearbyHostile(entity: Entity | undefined): boolean {
+  return (
+    entity?.proximity === 'nearby' &&
+    entity.hp.current > 0 &&
+    entity.system['attitude'] === 'hostile'
   );
 }
 
@@ -35,7 +45,9 @@ function hasLivingHostiles(state: GameState): boolean {
 
 function canAct(entity: Entity | undefined): boolean {
   return (
-    entity?.present === true && entity.hp.current > 0 && !isIncapacitated(readConditions(entity))
+    entity?.proximity === 'engaged' &&
+    entity.hp.current > 0 &&
+    !isIncapacitated(readConditions(entity))
   );
 }
 
@@ -80,6 +92,13 @@ export function dndNextCombatStep(
 ): CombatStep | null {
   const encounter = readEncounter(state);
   if (!encounter) return null;
+  if (state.spawnOrder.some((id) => nearbyHostile(state.entities[id]))) {
+    return {
+      kind: 'procedure',
+      label: 'Nearby hostiles join',
+      procedure: { kind: 'engageNearby' },
+    };
+  }
   if (!hasLivingHostiles(state)) {
     return { kind: 'procedure', label: 'End of combat', procedure: { kind: 'endEncounter' } };
   }

@@ -20,7 +20,7 @@ function targetsOf(state: GameState, actorId: string): ActionMenu['targets'] {
     .filter((id) => {
       if (id === actorId) return false;
       const entity = state.entities[id];
-      return entity?.present === true && entity.hp.current > 0;
+      return entity?.proximity === 'engaged' && entity.hp.current > 0;
     })
     .map((id, index) => ({
       alias: `T${String(index + 1)}`,

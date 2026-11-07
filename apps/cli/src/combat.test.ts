@@ -77,14 +77,16 @@ describe('combat turn order through the orchestrator', () => {
     expect(status).toContain('Combat: round 2');
   });
 
-  it('refuses a spawn during combat and changes nothing', async () => {
+  it('a reinforcement joins the order without moving the current turn', async () => {
     const { session, engine } = fight(['hero', 'goblin_1']);
-    const commits = engine.commits.length;
     const result = await session.orchestrator.runSpawn({ query: 'wolf', count: 1 });
-    expect(result.status).toBe('clarify');
-    expect(result.clarification?.reason).toBe('combat_active');
-    expect(engine.commits).toHaveLength(commits);
-    expect(engine.state.entities['wolf_1']).toBeUndefined();
-    expect(session.orchestrator.canUndoTurn).toBe(false);
+    expect(result.status).toBe('resolved');
+    expect(engine.state.entities['wolf_1']?.proximity).toBe('engaged');
+    const encounter = readEncounter(engine.state);
+    const index = encounter?.order.findIndex((entry) => entry.entityId === 'wolf_1') ?? -1;
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(encounter?.order[encounter.turnIndex]?.entityId).toBe('hero');
+    if (index < (encounter?.turnIndex ?? 0)) expect(encounter?.acted).toContain('wolf_1');
+    else expect(encounter?.acted).not.toContain('wolf_1');
   });
 });

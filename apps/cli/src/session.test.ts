@@ -34,6 +34,9 @@ const idle = {
   spawn3Query: null,
   spawn3Count: null,
   spawn3Attitude: null,
+  spawn1Proximity: null,
+  spawn2Proximity: null,
+  spawn3Proximity: null,
   checkAbility: null,
   checkSkill: null,
   wantsAction: false,
@@ -70,7 +73,7 @@ describe('cli play', () => {
     });
   });
 
-  it('plays the armory scene without treating stealth as Hide', async () => {
+  it('plays the armory scene and treats pre-combat stealth as Hide', async () => {
     const catalog = loadCatalog();
     const sheet = defaultAdventurerSheet();
     expect(sheet.hpMax).toBe(10);
@@ -170,19 +173,14 @@ describe('cli play', () => {
     const rngBefore = engine.state.rng;
     await handleCliLine(session, 'I sneak up and stab the goblin.', out);
     const sneak = session.orchestrator.logs.at(-1);
-    expect(sneak?.facts.map((fact) => fact.text).join('\n')).toMatch(
-      /Stealth \d+ vs DC 12, (success|failure)/,
-    );
-    expect(sneak?.facts.map((fact) => fact.text).join('\n')).toMatch(
-      /vs AC 15, (hit|miss|critical hit)/,
-    );
+    const told = sneak?.facts.map((fact) => fact.text).join('\n') ?? '';
+    expect(told).toMatch(/Stealth \d+ vs DC 15, (success|failure)/);
+    expect(told).toMatch(/vs AC 15, (hit|miss|critical hit)/);
     expect(sneak?.commits.some((commit) => commit.request?.actionAlias === 'A1')).toBe(true);
-    expect(
-      sneak?.commits.some((commit) =>
-        commit.events.some((event) => event.type === 'entity.systemDataSet'),
-      ),
-    ).toBe(false);
-    expect(readConditions(hero).ids).not.toContain('invisible');
+    // The attack roll ends Hide, so Invisible does not survive the turn.
+    const after = engine.state.entities['hero'];
+    if (!after) throw new Error('missing hero');
+    expect(readConditions(after).ids).not.toContain('invisible');
     expect(out.text()).toContain('Steel flashes.');
     const hpAfter = engine.state.entities['goblin_warrior_1']?.hp.current;
     const rngAfter = sneak?.rngAfter;

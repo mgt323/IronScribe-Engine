@@ -12,6 +12,7 @@ describe('Spell resolution consistency', () => {
     range: '60 feet',
     rangeFeet: 60,
     concentration: false,
+    verbal: false,
     resolution: 'save',
     mechanics: 'override',
     attack: null,

@@ -13,6 +13,8 @@ export const Spell = z
     /** null for Self and Touch. */
     rangeFeet: z.number().int().nullable(),
     concentration: z.boolean(),
+    /** True when the spell has a verbal component. Casting it ends Hide. */
+    verbal: z.boolean(),
     resolution: z.enum(['attack', 'save', 'auto', 'none']),
     /** Who filled in the mechanics: hand-checked override, the text parser, or nobody. */
     mechanics: z.enum(['override', 'parsed', 'text-only']),

@@ -77,7 +77,7 @@ export function characterToEntity(
     id: entityId,
     name: options?.name ?? 'Adventurer',
     templateRef: null,
-    present: true,
+    proximity: 'engaged',
     hp: { current: parsed.hpMax, max: parsed.hpMax },
     system: { character: parsed },
   };

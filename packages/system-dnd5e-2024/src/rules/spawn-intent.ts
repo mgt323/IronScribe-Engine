@@ -49,10 +49,16 @@ function nextEntityId(state: GameState, templateId: string, used: Set<string>): 
   return id;
 }
 
-function spawnOne(template: Monster, id: string, attitude: string) {
+function spawnOne(
+  template: Monster,
+  id: string,
+  attitude: string,
+  proximity: 'engaged' | 'nearby',
+) {
   const entity = monsterToEntity(template, id);
   return {
     ...entity,
+    proximity,
     system: { ...entity.system, attitude },
   };
 }
@@ -84,7 +90,8 @@ function matchTemplates(catalog: Catalog, query: string): readonly Monster[] {
 
 /**
  * One catalog match spawns `count` copies. Zero or many matches do not.
- * No spawn happens while an encounter is active (Stage 7a has no reinforcements).
+ * A spawn during an encounter is a reinforcement. Engaged ones join the order
+ * through `afterSpawn`; nearby ones wait until a fight pulls them in.
  */
 export function resolveDndSpawn(
   state: GameState,
@@ -97,8 +104,9 @@ export function resolveDndSpawn(
     throw new EngineError('invalid_amount', 'A turn can spawn at most 10 creatures');
   }
   const attitude = DndAttitude.parse(request.attitude ?? 'hostile');
-  if (state.system['encounter'] != null) {
-    return { status: 'combat_active', query: request.query };
+  const proximity = request.proximity ?? 'engaged';
+  if (proximity !== 'engaged' && proximity !== 'nearby') {
+    throw new EngineError('invalid_entity', 'Spawn proximity must be engaged or nearby');
   }
   const matches = matchTemplates(catalog, request.query);
   if (matches.length === 0) return { status: 'not_found', query: request.query };
@@ -116,7 +124,7 @@ export function resolveDndSpawn(
   if (!template) throw new EngineError('invalid_entity', 'missing monster template');
   const used = new Set<string>();
   const entities = Array.from({ length: count }, () =>
-    spawnOne(template, nextEntityId(state, template.id, used), attitude),
+    spawnOne(template, nextEntityId(state, template.id, used), attitude, proximity),
   );
   return {
     status: 'matched',

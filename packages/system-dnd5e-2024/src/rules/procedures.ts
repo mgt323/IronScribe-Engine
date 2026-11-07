@@ -15,7 +15,9 @@ import { runCombatProcedure } from './combat.js';
 import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
 import { runDeathSave } from './death-save-roll.js';
+import { HIDE_DC, hideAllowed, resolveHide, resolveSearch } from './hide.js';
 import { rollInitiative } from './initiative.js';
+import { engageNearbyHostiles, joinEncounter } from './join-encounter.js';
 import { ABILITY_LABEL } from './modifiers.js';
 import { runRecharge } from './usage.js';
 
@@ -44,6 +46,13 @@ const RechargeProcedure = z.strictObject({
   kind: z.literal('recharge'),
   actorId: z.string(),
 });
+const JoinProcedure = z.strictObject({
+  kind: z.literal('joinEncounter'),
+  entityIds: z.array(z.string()),
+});
+const EngageProcedure = z.strictObject({
+  kind: z.literal('engageNearby'),
+});
 const CombatProcedure = z.strictObject({
   kind: z.enum(['advanceTurn', 'advanceRound', 'endEncounter']),
 });
@@ -56,6 +65,8 @@ const ProcedureInput = z.discriminatedUnion('kind', [
   InitiativeProcedure,
   DeathSaveProcedure,
   RechargeProcedure,
+  JoinProcedure,
+  EngageProcedure,
 ]);
 
 function skillAbility(catalog: Catalog, skillId: string): AbilityName {
@@ -94,6 +105,8 @@ export function runDndProcedure(
     return runCombatProcedure(state, input.kind);
   }
   if (input.kind === 'initiative') return rollInitiative(state, rng, input.surprised, catalog);
+  if (input.kind === 'joinEncounter') return joinEncounter(state, rng, input.entityIds, catalog);
+  if (input.kind === 'engageNearby') return engageNearbyHostiles(state, rng, catalog);
   if (input.kind === 'recharge') return runRecharge(state, input.actorId, rng);
   if (input.kind === 'deathSave') return runDeathSave(state, input.actorId, rng);
 
@@ -108,6 +121,13 @@ export function runDndProcedure(
       ability: input.ability,
     });
     return { events: [], facts: [testFact('save', ABILITY_LABEL[input.ability], result)] };
+  }
+  if (input.skill === 'stealth' && input.dc === HIDE_DC && hideAllowed(state, input.actorId)) {
+    return resolveHide(state, entity, rng, catalog);
+  }
+  if (input.skill === 'perception') {
+    const search = resolveSearch(state, entity, rng, catalog);
+    if (search) return search;
   }
   const ability = input.skill === null ? input.ability : skillAbility(catalog, input.skill);
   const result = (input.skill === null ? abilityCheck : skillCheck)(rng, {

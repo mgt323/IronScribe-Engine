@@ -10,7 +10,7 @@ import {
 } from '@iron-scribe/engine-core';
 import type { StructuredPrompt } from '@iron-scribe/llm';
 
-import { clarificationFor, type PendingSpawn } from './spawn-turn.js';
+import { clarificationFor, commitSpawn, type PendingSpawn } from './spawn-turn.js';
 import type { TurnClarification, TurnLogEntry, TurnResult, TurnStatus } from './types.js';
 
 /* Pure helpers for orchestrator.ts. */
@@ -72,13 +72,10 @@ export function spawnDirect(engine: Engine, system: RuleSystem, request: SpawnRe
   if (resolution.status !== 'matched') {
     return { commits: [], facts: [], clarification: clarificationFor(resolution) };
   }
-  engine.commit(
-    'spawn',
-    resolution.entities.map((entity) => ({ type: 'entity.spawned' as const, entity })),
-  );
+  const facts = commitSpawn({ engine, system }, resolution.entities, resolution.facts);
   return {
     commits: engine.commits.slice(started),
-    facts: [...resolution.facts],
+    facts,
     clarification: null,
   };
 }

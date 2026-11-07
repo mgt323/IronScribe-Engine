@@ -19,9 +19,15 @@ export function snapshot(engine) {
     encounter: clone(s.system.encounter ?? null),
     hp: Object.fromEntries(Object.entries(s.entities).map(([id, e]) => [id, e.hp.current])),
     max: Object.fromEntries(Object.entries(s.entities).map(([id, e]) => [id, e.hp.max])),
-    present: Object.fromEntries(Object.entries(s.entities).map(([id, e]) => [id, e.present])),
+    present: Object.fromEntries(
+      Object.entries(s.entities).map(([id, e]) => [id, e.proximity === 'engaged']),
+    ),
     hostiles: Object.values(s.entities).filter(
-      (e) => e.present && e.hp.current > 0 && e.system?.attitude === 'hostile' && e.id !== HERO,
+      (e) =>
+        e.proximity === 'engaged' &&
+        e.hp.current > 0 &&
+        e.system?.attitude === 'hostile' &&
+        e.id !== HERO,
     ).length,
     rng: clone(s.rng),
     commits: engine.commits.length,
@@ -140,7 +146,7 @@ export const spawn = (ctx, args) => ctx.send(`/spawn ${args}`);
 // --- state readers -------------------------------------------------------------
 
 export const entities = (ctx) => Object.values(ctx.state().entities);
-export const others = (ctx) => entities(ctx).filter((e) => e.id !== HERO && e.present);
+export const others = (ctx) => entities(ctx).filter((e) => e.id !== HERO && e.proximity !== 'gone');
 export const baseId = (id) => id.replace(/_\d+$/, '').replace(/_/g, '-');
 export const ofKind = (ctx, kind) => others(ctx).filter((e) => baseId(e.id) === kind);
 export const attitude = (e) => e.system?.attitude;

@@ -105,6 +105,30 @@ describe('initiative (SRD 5.2.1, Initiative)', () => {
     expect(result.facts).toHaveLength(1);
   });
 
+  it('Invisible and Surprise cancel to a normal roll (SRD 5.2.1)', () => {
+    const hero = characterToEntity(sampleCharacter({ abilities: abilities(14) }), 'hero', {
+      name: 'Hero',
+    });
+    const hidden = {
+      ...hero,
+      system: { ...hero.system, conditions: { ids: ['invisible'], exhaustion: 0 } },
+    };
+    const result = rollInitiative(
+      stateWith(hidden, monsterToEntity(goblin, 'goblin_1')),
+      createScriptedRng([10, 10]),
+      ['hero'],
+      catalog,
+    );
+    expect(result.facts.map((fact) => fact.text)).toEqual(['Goblin Warrior 12', 'Hero 12']);
+  });
+
+  it('skips nearby creatures', () => {
+    const hero = characterToEntity(sampleCharacter(), 'hero');
+    const waiting = { ...monsterToEntity(goblin, 'goblin_1'), proximity: 'nearby' as const };
+    const result = rollInitiative(stateWith(hero, waiting), createScriptedRng([10]), [], catalog);
+    expect(result.facts).toHaveLength(1);
+  });
+
   it('rejects a surprised id that is not in the scene', () => {
     const hero = characterToEntity(sampleCharacter(), 'hero');
     expect(() =>

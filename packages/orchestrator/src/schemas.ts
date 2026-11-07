@@ -10,6 +10,7 @@ export interface SpawnSlotInput {
   readonly query: string | null;
   readonly count: number | null;
   readonly attitude: SpawnAttitude | null;
+  readonly proximity: 'engaged' | 'nearby' | null;
 }
 
 export interface TurnIntent {
@@ -18,12 +19,15 @@ export interface TurnIntent {
   readonly spawn1Query: string | null;
   readonly spawn1Count: number | null;
   readonly spawn1Attitude: SpawnAttitude | null;
+  readonly spawn1Proximity: 'engaged' | 'nearby' | null;
   readonly spawn2Query: string | null;
   readonly spawn2Count: number | null;
   readonly spawn2Attitude: SpawnAttitude | null;
+  readonly spawn2Proximity: 'engaged' | 'nearby' | null;
   readonly spawn3Query: string | null;
   readonly spawn3Count: number | null;
   readonly spawn3Attitude: SpawnAttitude | null;
+  readonly spawn3Proximity: 'engaged' | 'nearby' | null;
   readonly checkAbility: string | null;
   readonly checkSkill: string | null;
   readonly wantsAction: boolean;
@@ -32,9 +36,24 @@ export interface TurnIntent {
 /** The three spawn slots, in order. */
 export function spawnSlotsOf(intent: TurnIntent): readonly SpawnSlotInput[] {
   return [
-    { query: intent.spawn1Query, count: intent.spawn1Count, attitude: intent.spawn1Attitude },
-    { query: intent.spawn2Query, count: intent.spawn2Count, attitude: intent.spawn2Attitude },
-    { query: intent.spawn3Query, count: intent.spawn3Count, attitude: intent.spawn3Attitude },
+    {
+      query: intent.spawn1Query,
+      count: intent.spawn1Count,
+      attitude: intent.spawn1Attitude,
+      proximity: intent.spawn1Proximity,
+    },
+    {
+      query: intent.spawn2Query,
+      count: intent.spawn2Count,
+      attitude: intent.spawn2Attitude,
+      proximity: intent.spawn2Proximity,
+    },
+    {
+      query: intent.spawn3Query,
+      count: intent.spawn3Count,
+      attitude: intent.spawn3Attitude,
+      proximity: intent.spawn3Proximity,
+    },
   ];
 }
 
@@ -70,6 +89,10 @@ function attitudeSchema(enabled: boolean) {
   return enabled ? z.enum(ATTITUDES).nullable() : z.null();
 }
 
+function proximitySchema(enabled: boolean) {
+  return enabled ? z.enum(['engaged', 'nearby']).nullable() : z.null();
+}
+
 function refineSpawnSlots(slots: readonly SpawnSlotInput[], ctx: z.RefinementCtx): void {
   let seenEmpty = false;
   let total = 0;
@@ -99,12 +122,15 @@ export function buildIntentSchema(
       spawn1Query: querySchema(on),
       spawn1Count: countSchema(on),
       spawn1Attitude: attitudeSchema(on),
+      spawn1Proximity: proximitySchema(on),
       spawn2Query: querySchema(on),
       spawn2Count: countSchema(on),
       spawn2Attitude: attitudeSchema(on),
+      spawn2Proximity: proximitySchema(on),
       spawn3Query: querySchema(on),
       spawn3Count: countSchema(on),
       spawn3Attitude: attitudeSchema(on),
+      spawn3Proximity: proximitySchema(on),
       checkAbility: nullableEnum(checkCatalog?.abilities ?? []),
       checkSkill: nullableEnum(checkCatalog?.skills ?? []),
       wantsAction: z.boolean(),

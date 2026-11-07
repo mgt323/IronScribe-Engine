@@ -83,5 +83,5 @@ targets (area spells, Magic Missile); `/undo` restores spent slots with the rest
 ## Test rules
 
 - End-to-end tests use `createScriptedLlmClient` and the real D&D system.
-- A Stealth check before an attack must not grant Invisible or Advantage.
+- Pre-combat Stealth is Hide (DC 15). The attack that follows ends it.
 - Keep files under about 300 lines. Eval files (everything under `eval/`) are exempt.

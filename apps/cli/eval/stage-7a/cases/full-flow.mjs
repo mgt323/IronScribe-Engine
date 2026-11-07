@@ -98,31 +98,34 @@ export const FULL_CASES = [
       ),
   },
   {
-    id: 'flow-reinforcement-refused',
+    id: 'flow-reinforcement-joins',
     category: 'flow',
     tier: 'full',
     heroHp: 80,
     about:
-      'Mid-combat "another wolf arrives": engine refuses (combat_active), nothing is committed.',
+      'Mid-combat "another wolf arrives": it joins the existing order and does not take a turn already passed.',
     steps: async (ctx) => {
       await spawn(ctx, 'wolf');
       await ctx.send('I stab the wolf with my dagger.');
-      ctx.notes.before = JSON.stringify(ctx.state());
-      ctx.notes.undoable = ctx.session.orchestrator.canUndoTurn;
       await ctx.send('Another wolf leaps out of the trees and joins the fight.');
     },
     check: (ctx) => {
-      const turn = lastClarify(ctx);
+      const order = encounter(ctx)?.order.map((entry) => entry.entityId) ?? [];
+      const turn = encounter(ctx)?.turnIndex ?? -1;
+      const wolves = order.filter((id) => id.startsWith('wolf'));
+      const joined = wolves[1];
+      const at = joined ? order.indexOf(joined) : -1;
       return rules(
+        [says(ctx).at(-1).result.status === 'resolved', `status ${says(ctx).at(-1).result.status}`],
+        [ofKind(ctx, 'wolf').length === 2, 'the second wolf did not spawn'],
+        [wolves.length === 2, `order ${order.join(',')}`],
         [
-          turn?.result.clarification?.reason === 'combat_active',
-          `status ${says(ctx).at(-1).result.status}`,
+          encounter(ctx)?.order[turn]?.entityId === HERO || at < 0,
+          'the current turn moved off the hero',
         ],
-        [ofKind(ctx, 'wolf').length === 1, 'a second wolf appeared mid-combat'],
-        [JSON.stringify(ctx.state()) === ctx.notes.before, 'refused spawn changed state or RNG'],
         [
-          ctx.session.orchestrator.canUndoTurn === ctx.notes.undoable,
-          'refusal pushed undo history',
+          at < 0 || at >= turn || (encounter(ctx)?.acted ?? []).includes(joined),
+          'a wolf inserted before the current turn was not marked acted',
         ],
       );
     },

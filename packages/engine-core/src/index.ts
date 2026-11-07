@@ -28,6 +28,7 @@ export {
   type GameState,
   type Hp,
   type JsonValue,
+  type Proximity,
   type SystemData,
   createInitialState,
 } from './state.js';

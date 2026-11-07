@@ -137,7 +137,7 @@ async function confirmHero(llm, catalog, archetype, hp) {
     id: 'hero',
     name: 'Adventurer',
     templateRef: null,
-    present: true,
+    proximity: 'engaged',
     hp: { current: sheet.hpMax, max: sheet.hpMax },
     system: { character: sheet },
   };

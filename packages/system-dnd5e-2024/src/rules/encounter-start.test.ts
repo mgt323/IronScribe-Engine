@@ -29,15 +29,35 @@ function stateWith(attitude: string | null, withEncounter = false) {
 
 describe('encounter start', () => {
   it('rolls initiative before the first attack on a hostile creature', () => {
-    expect(dndEncounterStart(stateWith('hostile'), 'hero')).toEqual({
+    expect(dndEncounterStart(stateWith('hostile'), 'hero', catalog)).toEqual({
       kind: 'initiative',
       surprised: [],
     });
   });
 
   it('does nothing for a neutral creature, an empty scene, or a running encounter', () => {
-    expect(dndEncounterStart(stateWith('neutral'), 'hero')).toBeNull();
-    expect(dndEncounterStart(stateWith(null), 'hero')).toBeNull();
-    expect(dndEncounterStart(stateWith('hostile', true), 'hero')).toBeNull();
+    expect(dndEncounterStart(stateWith('neutral'), 'hero', catalog)).toBeNull();
+    expect(dndEncounterStart(stateWith(null), 'hero', catalog)).toBeNull();
+    expect(dndEncounterStart(stateWith('hostile', true), 'hero', catalog)).toBeNull();
+  });
+
+  it('a successful Hide gives opponents Disadvantage when their Passive Perception is short', () => {
+    const hidden = stateWith('hostile');
+    const hero = hidden.entities['hero'];
+    if (!hero) throw new Error('missing');
+    const state = {
+      ...hidden,
+      entities: {
+        ...hidden.entities,
+        hero: {
+          ...hero,
+          system: { ...hero.system, hiddenStealthDc: 30 },
+        },
+      },
+    };
+    expect(dndEncounterStart(state, 'hero', catalog)).toEqual({
+      kind: 'initiative',
+      surprised: ['goblin_1'],
+    });
   });
 });

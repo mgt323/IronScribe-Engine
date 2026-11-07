@@ -42,6 +42,7 @@ export function normalizeSpell(raw: RawSpell): Spell {
     range: raw.range,
     rangeFeet: /^\d+ feet$/.test(raw.range) ? feet(raw.range) : null,
     concentration: raw.concentration,
+    verbal: raw.components.includes('V'),
     ...mechanicsFor(raw),
     text: raw.description,
     source: raw.url,

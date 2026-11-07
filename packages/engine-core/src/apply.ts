@@ -24,6 +24,13 @@ function checkSpawn(entity: Entity): void {
   if (typeof id !== 'string' || id.length === 0) {
     throw new EngineError('invalid_entity', 'Entity id must be a non-empty string');
   }
+  if (
+    entity.proximity !== 'engaged' &&
+    entity.proximity !== 'nearby' &&
+    entity.proximity !== 'gone'
+  ) {
+    throw new EngineError('invalid_entity', `Invalid proximity for ${id}`);
+  }
   if (!isInt(hp.max) || hp.max < 1 || !isInt(hp.current) || hp.current < 0 || hp.current > hp.max) {
     throw new EngineError('invalid_entity', `Invalid hit points for ${id}`);
   }
@@ -61,8 +68,16 @@ export function applyEvent(state: GameState, event: CoreEvent, system?: RuleSyst
         spawnOrder: state.spawnOrder.filter((id) => id !== event.entityId),
       };
     }
-    case 'entity.presenceSet':
-      return putEntity(state, { ...getEntity(state, event.entityId), present: event.present });
+    case 'entity.presenceSet': {
+      if (
+        event.proximity !== 'engaged' &&
+        event.proximity !== 'nearby' &&
+        event.proximity !== 'gone'
+      ) {
+        throw new EngineError('invalid_entity', `Invalid proximity for ${event.entityId}`);
+      }
+      return putEntity(state, { ...getEntity(state, event.entityId), proximity: event.proximity });
+    }
     case 'entity.damaged': {
       const entity = getEntity(state, event.entityId);
       checkAmount(event.amount);

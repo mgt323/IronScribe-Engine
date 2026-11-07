@@ -9,6 +9,7 @@ import {
 } from '@iron-scribe/engine-core';
 
 import { conditionEvents, readConditions, rollEffects } from './conditions.js';
+import { isInScene } from './scene.js';
 import { readDeathSaves, setDeathSaves, isDying, type DeathSaveState } from './death-saves.js';
 
 /** SRD 5.2.1, "Death Saving Throws": a roll of 10 or higher succeeds. */
@@ -19,7 +20,7 @@ function hasFriendlyAlly(state: GameState, actorId: string): boolean {
     const other = state.entities[id];
     return (
       id !== actorId &&
-      other?.present === true &&
+      isInScene(other) &&
       other.hp.current > 0 &&
       other.system['attitude'] === 'friendly'
     );

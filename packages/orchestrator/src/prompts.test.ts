@@ -4,8 +4,12 @@ import { describe, expect, it } from 'vitest';
 
 import { buildDecisionPrompt, buildNarrationPrompt } from './prompts.js';
 
-const named = (id: string, name: string, attitude: string, present = true) =>
-  makeEntity(id, { name, present, system: { attitude } });
+const named = (
+  id: string,
+  name: string,
+  attitude: string,
+  proximity: 'engaged' | 'nearby' | 'gone' = 'engaged',
+) => makeEntity(id, { name, proximity, system: { attitude } });
 
 const state = applyEvents(
   createInitialState({ seed: 1 }),
@@ -14,7 +18,8 @@ const state = applyEvents(
     named('rat_1', 'Rat', 'hostile'),
     named('rat_2', 'Rat', 'hostile'),
     named('guard_1', 'Guard', 'friendly'),
-    named('wolf_1', 'Wolf', 'hostile', false),
+    named('wolf_1', 'Wolf', 'hostile', 'gone'),
+    named('bandit_1', 'Bandit', 'hostile', 'nearby'),
   ].map((entity) => ({ type: 'entity.spawned' as const, entity })),
 );
 

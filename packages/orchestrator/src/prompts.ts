@@ -11,9 +11,9 @@ function prompt(scene: string): StructuredPrompt {
   return { prefix: ORCHESTRATOR_PREFIX, scene, temperature: 0, maxOutputTokens: 2048 };
 }
 
-function presentLines(state: GameState): string {
+function roster(state: GameState, proximity: 'engaged' | 'nearby'): string {
   const lines = state.spawnOrder
-    .filter((id) => state.entities[id]?.present === true)
+    .filter((id) => state.entities[id]?.proximity === proximity)
     .map((id) => {
       const entity = state.entities[id];
       const current = entity?.hp.current ?? 0;
@@ -33,9 +33,11 @@ export function buildIntentPrompt(
     [
       `Actor: ${actorId}`,
       'Present:',
-      presentLines(state),
+      roster(state, 'engaged'),
+      'Nearby (not engaged):',
+      roster(state, 'nearby'),
       '',
-      'Report, in this order: (1) spawnIsNew: true only if the sentence introduces creatures or people who are NOT already listed under Present (a goblin, a guard, a merchant, a dog); false if the player talks about, attacks, or ambushes someone who is already listed. "a goblin" while a goblin is listed means that goblin: false. Compare with Present before you answer. (2) Up to three catalog spawns, in order: spawn1Query, spawn1Count (1-10) and spawn1Attitude (friendly, neutral or hostile), then the same fields for spawn2 and spawn3. A later slot needs the earlier ones. Leave unused slots null. One kind of creature per slot, so "a wolf and two bandits" is spawn1 wolf count 1 and spawn2 bandit count 2, with spawn3 null. The three counts together are at most 10. Keep the words that pick a variant ("young red dragon", not "dragon"). All nine fields are null when spawnIsNew is false or nobody new appears. Never use an id from Present as a query. (3) A check (ability id and skill id, or null) and whether the actor also wants one sheet action. A stance or preparation ("I prepare to fight", "I ready my dagger", "I grip my weapon") is not an action: set wantsAction to false unless the player actually strikes, shoots, or otherwise uses a weapon now. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat. Sneaking, hiding, or creeping up before a strike is that feat: set checkAbility dex and checkSkill stealth, and still set wantsAction true for the strike. Do not choose aliases or a DC.',
+      'Report, in this order: (1) spawnIsNew: true only if the sentence introduces creatures or people who are NOT already listed under Present or Nearby (not engaged) (a goblin, a guard, a merchant, a dog); false if the player talks about, attacks, or ambushes someone who is already listed. "a goblin" while a goblin is listed means that goblin: false. Compare with both lists before you answer. (2) Up to three catalog spawns, in order: spawn1Query, spawn1Count (1-10), spawn1Attitude (friendly, neutral or hostile) and spawn1Proximity (engaged or nearby), then the same fields for spawn2 and spawn3. engaged means they join the scene and a fight. nearby means they are in the area but not in the fight (guards at the gate while you talk to someone else). A later slot needs the earlier ones. Leave unused slots null, including proximity. One kind of creature per slot, so "a wolf and two bandits" is spawn1 wolf count 1 and spawn2 bandit count 2, with spawn3 null. The three counts together are at most 10. Keep the words that pick a variant ("young red dragon", not "dragon"). All twelve spawn fields are null when spawnIsNew is false or nobody new appears. Never use an id from Present or Nearby as a query. (3) A check (ability id and skill id, or null) and whether the actor also wants one sheet action. A stance or preparation ("I prepare to fight", "I ready my dagger", "I grip my weapon") is not an action: set wantsAction to false unless the player actually strikes, shoots, or otherwise uses a weapon now. Attacking is a sheet action and rolls itself: for a plain attack set the check to null. Use a check only for a separate uncertain feat. Sneaking, hiding, or creeping up before a strike is that feat: set checkAbility dex and checkSkill stealth, and still set wantsAction true for the strike. Do not choose aliases or a DC.',
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
@@ -94,7 +96,7 @@ export function buildNarrationPrompt(
     fact.key === 'initiative' ? `- Turn order, not an event: ${fact.text}` : `- ${fact.text}`,
   );
   const names = state.spawnOrder
-    .filter((id) => id !== actorId && state.entities[id]?.present === true)
+    .filter((id) => id !== actorId && state.entities[id]?.proximity === 'engaged')
     .map((id) => `${id} = ${state.entities[id]?.name ?? id}`);
   return prompt(
     [

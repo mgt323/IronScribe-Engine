@@ -60,7 +60,7 @@ describe('other entity events', () => {
   it('throws unknown_entity', () => {
     const events: CoreEvent[] = [
       { type: 'entity.removed', entityId: 'nope' },
-      { type: 'entity.presenceSet', entityId: 'nope', present: false },
+      { type: 'entity.presenceSet', entityId: 'nope', proximity: 'gone' },
       { type: 'entity.damaged', entityId: 'nope', amount: 1 },
       { type: 'entity.healed', entityId: 'nope', amount: 1 },
       { type: 'entity.systemDataSet', entityId: 'nope', key: 'k', value: 1 },
@@ -90,13 +90,13 @@ describe('other entity events', () => {
     }
   });
 
-  it('toggles presence and cleans spawnOrder on removal', () => {
+  it('sets proximity and cleans spawnOrder on removal', () => {
     const s = applyEvent(withHero(), {
       type: 'entity.presenceSet',
       entityId: 'hero',
-      present: false,
+      proximity: 'gone',
     });
-    expect(s.entities['hero']?.present).toBe(false);
+    expect(s.entities['hero']?.proximity).toBe('gone');
     const removed = applyEvent(s, { type: 'entity.removed', entityId: 'hero' });
     expect(removed.entities['hero']).toBeUndefined();
     expect(removed.spawnOrder).toEqual([]);

@@ -18,7 +18,7 @@ describe('monsterToEntity', () => {
       id: 'goblin_1',
       name: 'Goblin Warrior',
       templateRef: 'srd-5.2.1:monster:goblin-warrior',
-      present: true,
+      proximity: 'engaged',
       hp: { current: 10, max: 10 },
     });
   });
