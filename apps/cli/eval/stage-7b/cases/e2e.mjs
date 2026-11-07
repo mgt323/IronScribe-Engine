@@ -10,6 +10,7 @@ import {
   baseId,
   deathSaves,
   encounter,
+  entities,
   heroUp,
   isDead,
   isDying,
@@ -18,6 +19,7 @@ import {
   rules,
   says,
   slotsUsed,
+  spawn,
 } from '../lib/driver.mjs';
 
 const ORDINAL = ['first', 'second', 'third', 'fourth', 'fifth'];
@@ -142,5 +144,28 @@ export const E2E_CASES = [
     check: (ctx) =>
       livingHostiles(ctx).some((e) => baseId(e.id) === 'young-red-dragon') ||
       'no young red dragon in the scene',
+  },
+  {
+    id: 'e2e-narration-ignores-unspawned-creature',
+    category: 'e2e',
+    tier: 'full',
+    about:
+      '7C.1: the player names a wolf and a dragon the engine never spawned while stabbing a goblin warrior; the narration must not show either as present (grounding).',
+    steps: async (ctx) => {
+      await spawn(ctx, 'goblin warrior');
+      await ctx.send(
+        'I stab the goblin warrior while a huge wolf and a red dragon circle behind it, snarling.',
+      );
+      const stray = entities(ctx).some((e) => /wolf|dragon/.test(e.id));
+      if (stray) ctx.inconclusive('the model spawned the named creatures');
+    },
+    check: (ctx) => {
+      const told = says(ctx)
+        .map((t) => t.result?.narration ?? '')
+        .join(' ');
+      if (told === '') return 'no narration to check';
+      const seen = told.match(/\b(wolf|wolves|dragon)\b/i);
+      return seen ? `narration shows an unspawned creature: ${seen[0]}` : true;
+    },
   },
 ];

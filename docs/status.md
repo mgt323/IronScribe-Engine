@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A, 7B done; 7C open)     | In progress |
+| 7     | Encounters (7A, 7B, 7C.1 done)        | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -281,3 +281,18 @@ Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024
   and the answer is read the same way (7C spawn work)
 - Target slots are per dart or sub-attack: repeats are kept (`T1, T1, T2`). Magic Missile: one slot takes all
   darts, two give `[a, b, a]`, three are exact. Area saves still hit each creature once (deduplicated)
+
+## Stage 7C.1 notes (narration grounding)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- `buildNarrationPrompt` (`prompts.ts`) and `outcomes.ts`: present-only "Creatures in scene"; off-screen or backstory
+  people are memory only, never present; unspawned creatures never enter; the player line is tone and intent only;
+  inner states need a fact, visible reactions to facts are allowed
+- Outcomes use display names (no ids): "Your attack HITS/MISSES" vs "<Name>'s attack ...", save and defeat lines by name.
+  "You take no damage from the enemy attack" needs a hostile step aimed at the hero and no applied damage or downing
+  for them; Multiattack with one hit, an attack on an ally, or an earlier heal never produce it
+- engine-core `Fact` gained optional `source` and `targetIds`, set by the combat loop on NPC-step facts only
+- Eval: `grounding` probe ignores the player's own line (memory sentences excused); new case
+  `e2e-narration-ignores-unspawned-creature`. Oracle eval 100%, 0 invariant violations. Live model eval not rerun
+- Next: 7C.2 (mixed-group spawns), then 7C.3 (proximity, reinforcements, Hide and surprise)

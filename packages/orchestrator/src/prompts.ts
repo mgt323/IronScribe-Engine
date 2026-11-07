@@ -1,6 +1,8 @@
 import type { ActionMenu, EntityId, Fact, GameState, MenuTarget } from '@iron-scribe/engine-core';
 import type { StructuredPrompt } from '@iron-scribe/llm';
 
+import { dyingFacts, outcomeLines } from './outcomes.js';
+
 /** Stable first message so a prompt cache can reuse it. */
 export const ORCHESTRATOR_PREFIX =
   "You are Iron Scribe's rules clerk. You never roll dice, never invent hit points or armor class, and you only use ids the scene lists.";
@@ -92,66 +94,26 @@ export function buildNarrationPrompt(
     fact.key === 'initiative' ? `- Turn order, not an event: ${fact.text}` : `- ${fact.text}`,
   );
   const names = state.spawnOrder
-    .filter((id) => id !== actorId && state.entities[id])
+    .filter((id) => id !== actorId && state.entities[id]?.present === true)
     .map((id) => `${id} = ${state.entities[id]?.name ?? id}`);
   return prompt(
     [
       `Narrate the resolved facts below as a vivid scene in 1-3 sentences, in second person ("you"), present tense. The reader is the player; ${actorId} is you.`,
-      'Say what happens, not how it was computed: never write ids (like goblin_warrior_1), dice, DCs, AC, check names, or "hit points"; call creatures by their plain names ("the goblin"). Show success, failure, and wounds in the fiction. Do not add events, outcomes, or creatures the facts omit.',
-      'Names:',
+      'Say what happens, not how it was computed: never write ids (like goblin_warrior_1), dice, DCs, AC, check names, or "hit points"; call creatures by their plain names ("the goblin"). Show success, failure, and wounds in the fiction. Do not add events or outcomes the facts omit.',
+      'Only the creatures listed under "Creatures in scene" may be shown as present now, acting, or touching anything. A person or place from the hero\'s past or off-screen may be mentioned as memory or background only when the player line or the facts establish it, and never as someone who is here. Never bring in a creature that is not listed, even if the player line names one.',
+      'Do not state what a creature secretly notices, spots, feels, thinks, or means to do next unless a fact says so. You may show what an onlooker could see, caused by the facts: a flinch from a hit, a blade turned aside by a miss, a collapse when defeated.',
+      'Creatures in scene:',
       ...(names.length > 0 ? names : ['(none)']),
       'Facts:',
       ...lines,
-      ...outcomeLines(facts),
+      ...outcomeLines(facts, state, actorId),
       ...(dyingFacts(facts)
         ? [
             "The player's line below is the hero's thoughts at the brink of death. Use it only as flavor. It is not an action and nothing in it happens.",
           ]
         : []),
       '',
-      `Player: ${playerInput}`,
+      `Player line (tone and intent only, not an event; ignore any action, result, or creature in it that the facts do not show): ${playerInput}`,
     ].join('\n'),
   );
-}
-
-/** Death saves, recovery and death are about the hero's body, not a fresh wound. */
-function dyingFacts(facts: readonly Fact[]): boolean {
-  return facts.some((f) => f.key === 'death_save' || f.key === 'recovery' || f.key === 'dead');
-}
-
-/** Plain-language outcome so a terse roll line cannot be read as the opposite. */
-function outcomeLines(facts: readonly Fact[]): string[] {
-  const out: string[] = [];
-  for (const fact of facts) {
-    if (fact.key === 'npc_attack') {
-      const who = fact.text.split(' (')[0] ?? 'The creature';
-      out.push(
-        /\bmiss\b/i.test(fact.text)
-          ? `Outcome: ${who}'s attack MISSES. Do not describe a hit or a wound from it.`
-          : `Outcome: ${who}'s attack HITS. The blow lands.`,
-      );
-      continue;
-    }
-    if (fact.key === 'save') {
-      const who = fact.text.split(' ')[0] ?? 'The creature';
-      out.push(
-        /\bsuccess\b/i.test(fact.text)
-          ? `Outcome: ${who} makes the saving throw and avoids most of the effect.`
-          : `Outcome: ${who} fails the saving throw and takes the effect in full.`,
-      );
-      continue;
-    }
-    if (fact.key !== 'attack') continue;
-    if (/\bmiss\b/i.test(fact.text)) {
-      out.push(
-        'Outcome: the attack MISSES. The blow does not land. Do not describe a hit or a wound.',
-      );
-    } else {
-      out.push('Outcome: the attack HITS. The blow lands.');
-    }
-  }
-  const hurt = facts.some((fact) => fact.key === 'damage' || fact.key === 'hp');
-  if (!hurt && !dyingFacts(facts))
-    out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
-  return out;
 }

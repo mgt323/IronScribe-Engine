@@ -1,7 +1,7 @@
 # Stage 7: Encounters
 
-Stage 7 is split in three. 7A is done. 7B (combat rules) and 7C (scene, spawns,
-narration) are backlogs, not yet planned in detail. All three come before the
+Stage 7 is split in three. 7A and 7B are done. 7C (scene, spawns,
+narration) is split into 7C.1 (done), 7C.2 and 7C.3. All three come before the
 web UI (Stage 8).
 Day-to-day progress lives in `docs/status.md`; this file is the scope record.
 
@@ -86,7 +86,22 @@ Rules the engine still lacks. Nothing here needs new scene concepts.
    action", using a system wrapper that feeds `createScriptedRng` to `resolve`.
    Decide whether the eval hero keeps 200 HP, or cases get controlled dice.
 
-## 7C: scene, spawns and narration (to do)
+## 7C: scene, spawns and narration
+
+Phased. 7C.1 is done. 7C.2 (mixed-group spawns: three flat slots with a total cap of 10, a stored clarification
+queue that does not re-run the intent call, strict token matching of the player's answer) and 7C.3 (proximity
+`engaged | nearby | gone`, where `engaged` means encounter participant and not melee reach; a full audit of
+`entity.present`; reinforcements that keep `turnIndex`; SRD 5.2.1 Hide at DC 15, surprise disadvantage and
+Invisible advantage on initiative) are planned.
+
+### 7C.1: done (narration grounding)
+
+Items 1 to 3 below. Creatures in scene are present ones only; off-screen or backstory mentions stay allowed as
+memory, never as someone here; the player line is tone only; hero and NPC outcomes are labelled apart with
+display names; "unharmed" needs explicit hostile targeting plus no applied damage (NPC-step facts carry
+`source` and `targetIds`); inner states need a fact, visible reactions to facts are fine. Eval: `grounding`
+probe no longer excuses creatures only the player named (memory sentences are excused), and case
+`e2e-narration-ignores-unspawned-creature`. Live-model eval not rerun (oracle 100%).
 
 Who is in the scene, how they get there, and how it is told. Order is a
 suggestion. Narration grounding (item 1) is small and can be done first, on its

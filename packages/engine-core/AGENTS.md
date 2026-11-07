@@ -34,6 +34,8 @@ actorId)` (the procedure that ends a turn taken by acting). Optional
   set, must be its first entry), `MenuAction.maxTargets` (default 1). `validateRequest` dedupes,
   checks every alias, rejects more than `maxTargets` (`unexpected_target`), and returns
   `ResolvedRequest` with `target` (first) and `targets` (all, in order, `[]` when none)
+- `Fact` is `{ key, text }` plus optional `source` and `targetIds`, set only by the orchestrator on facts an NPC
+  step produced (who acted, who it was aimed at). Rule systems never set them.
 - `CheckDcContext` is typed (`actorId`, `ability`, `skill`, optional
   `procedureId`, optional `difficulty` band). No free-form model text
 - `SpawnRequest.attitude` is an optional string. The concrete ruleset validates

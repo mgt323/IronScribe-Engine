@@ -18,7 +18,8 @@ a name and a backstory. It does not draft scores, hit points, or gear.
 - `/save` writes seed, actor id, name, backstory, state, commits, and logs.
   It never writes an API key
 - `bin/play.mjs` (`pnpm play`) reads `--api-key` or `GEMINI_API_KEY` /
-  `GOOGLE_API_KEY` / `OPENAI_API_KEY` and passes the key only to the adapter
+  `GOOGLE_API_KEY` / `OPENAI_API_KEY` and passes the key only to the adapter.
+  `--hp <n>` (1-9999) overrides the preset's hit point maximum, for testing only
 
 - `eval/legacy/eval-play.mjs` is a live eval (not run in CI): 53 cases against a real
   model and the real D&D rules, in seven categories (spawn, clarify, action, check,

@@ -13,10 +13,31 @@ import {
 export const MAX_COMBAT_STEPS = 32;
 
 /** NPC attacks are told apart from the player's, with who attacked and with what. */
-function npcFacts(name: string, label: string, facts: readonly Fact[]): Fact[] {
-  return facts.map((fact) =>
-    fact.key === 'attack' ? { key: 'npc_attack', text: `${name} (${label}): ${fact.text}` } : fact,
-  );
+function npcFacts(
+  name: string,
+  label: string,
+  facts: readonly Fact[],
+  source: EntityId,
+  targetIds: readonly EntityId[],
+): Fact[] {
+  return facts.map((fact) => ({
+    ...(fact.key === 'attack'
+      ? { key: 'npc_attack', text: `${name} (${label}): ${fact.text}` }
+      : fact),
+    source,
+    targetIds,
+  }));
+}
+
+/** The creatures an NPC request is aimed at, read from the NPC's own menu before it acts. */
+function aimedAt(engine: Engine, request: ActionRequest): EntityId[] {
+  const aliases = request.targetAliases?.length
+    ? request.targetAliases
+    : request.targetAlias === null
+      ? []
+      : [request.targetAlias];
+  const { targets } = engine.menu(request.actorId);
+  return aliases.flatMap((alias) => targets.find((t) => t.alias === alias)?.entityId ?? []);
 }
 
 /**
@@ -39,8 +60,9 @@ export function advanceCombatUntilPlayer(
       continue;
     }
     const name = engine.state.entities[step.request.actorId]?.name ?? step.request.actorId;
+    const aimed = aimedAt(engine, step.request);
     const commit = engine.perform(step.request);
-    facts.push(...npcFacts(name, commit.label, commit.facts));
+    facts.push(...npcFacts(name, commit.label, commit.facts, step.request.actorId, aimed));
     const end = system.turnEnd?.(engine.state, step.request.actorId) ?? null;
     if (end) facts.push(...engine.runProcedure('combat', end).facts);
   }

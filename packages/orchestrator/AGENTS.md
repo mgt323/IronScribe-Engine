@@ -50,6 +50,16 @@ state except by calling the engine.
   prompt marks actions that take several targets. Narration prompt turns `save` facts into plain
   `Outcome:` lines. NPC facts: only `attack` becomes `npc_attack`; spells and save actions add a
   `use` fact (`<id> uses Acid Breath`)
+- Narration prompt (7C.1, `prompts.ts`, `outcomes.ts`): "Creatures in scene" lists present creatures only. Only
+  they may be shown as here, acting or touching anything; off-screen or backstory people may appear as memory
+  only when the player line or facts establish them; a creature the engine did not spawn never enters, even if
+  the player names it. The player line is labelled tone and intent only. Inner states (notices, feels, intends)
+  need a fact; visible reactions caused by facts are allowed. `Outcome:` lines use display names, never ids:
+  "Your attack HITS/MISSES" for the hero, "<Name>'s attack ..." for an NPC, save and defeat lines by name. "You
+  take no damage from the enemy attack" is emitted only when a hostile step was aimed at the hero and none of
+  its facts records applied damage or a downing for the hero. The combat loop tags NPC-step facts with
+  `source` and `targetIds` (resolved from the NPC's menu before it acts), so this never infers from a missing
+  `hp` fact.
 - Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules

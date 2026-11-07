@@ -41,6 +41,7 @@ Options:
   --api-key <key>        or GEMINI_API_KEY / GOOGLE_API_KEY / OPENAI_API_KEY
   --archetype <name>     rogue (default) or sorcerer
   --seed <value>         RNG seed (default: play)
+  --hp <n>               hit point maximum override, 1-9999 (testing only)
   --help, -h
 `);
 }
@@ -57,6 +58,14 @@ function envKey() {
   );
 }
 
+function parseHp(raw) {
+  const hp = Number(raw);
+  if (!/^\d+$/.test(raw) || hp < 1 || hp > 9999) {
+    throw new Error(`--hp must be a whole number from 1 to 9999 (got ${raw})`);
+  }
+  return hp;
+}
+
 function parseArgs(argv) {
   const options = {
     url: 'http://127.0.0.1:5001',
@@ -67,6 +76,7 @@ function parseArgs(argv) {
     apiKey: envKey(),
     seed: 'play',
     archetype: 'rogue',
+    hp: undefined,
     help: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -82,6 +92,7 @@ function parseArgs(argv) {
     else if (arg === '--api-key') options.apiKey = required(argv, (index += 1));
     else if (arg === '--seed') options.seed = required(argv, (index += 1));
     else if (arg === '--archetype') options.archetype = required(argv, (index += 1));
+    else if (arg === '--hp') options.hp = parseHp(required(argv, (index += 1)));
     else throw new Error(`Unknown argument: ${arg}`);
   }
   if (!isArchetype(options.archetype)) {
@@ -119,8 +130,9 @@ async function adapterFor(options) {
   });
 }
 
-async function confirmHero(llm, catalog, archetype) {
-  const sheet = defaultSheet(archetype);
+async function confirmHero(llm, catalog, archetype, hp) {
+  const base = defaultSheet(archetype);
+  const sheet = hp === undefined ? base : { ...base, hpMax: hp };
   const preview = {
     id: 'hero',
     name: 'Adventurer',
@@ -156,7 +168,7 @@ if (options.help) {
 
 const catalog = loadCatalog();
 const llm = createLlmClient(await adapterFor(options));
-const hero = await confirmHero(llm, catalog, options.archetype);
+const hero = await confirmHero(llm, catalog, options.archetype, options.hp);
 const session = createCliSession({
   seed: seedOf(options.seed),
   character: hero.sheet,

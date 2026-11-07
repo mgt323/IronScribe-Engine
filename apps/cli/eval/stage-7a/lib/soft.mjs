@@ -25,19 +25,38 @@ export function monsterNames(catalog) {
     .sort((a, b) => b.length - a.length);
 }
 
-function sceneWords(state, input) {
-  const names = Object.values(state.entities).map((e) => e.name.toLowerCase());
-  return `${names.join(' ')} ${input.toLowerCase()}`;
+/** Creatures the engine spawned. The player's own line is NOT a source: a creature the player
+ *  names but the engine did not spawn must not show up (7C.1). */
+function sceneWords(state) {
+  return Object.values(state.entities)
+    .map((e) => e.name.toLowerCase())
+    .join(' ');
+}
+
+/** Background or memory is allowed ("escaping the high priest's soldiers"); presence is not. */
+const MEMORY =
+  /\b(remember\w*|memor(y|ies)|once|years? ago|long ago|fled|flee(ing)?|escap(ed|ing)|past|behind you|back (home|then))\b/i;
+
+function onlyRemembered(narration, low) {
+  const re = new RegExp(`\\b${esc(low)}s?\\b`, 'i');
+  return narration
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => re.test(sentence))
+    .every((sentence) => MEMORY.test(sentence));
 }
 
 export function probeTurn(turn, state, names) {
   const n = turn.result?.narration;
   if (turn.kind !== 'say' || !n) return null;
   const out = {};
-  const allowed = sceneWords(state, turn.input);
+  const allowed = sceneWords(state);
   const stray = names.filter((name) => {
     const low = name.toLowerCase();
-    return !allowed.includes(low) && new RegExp(`\\b${esc(low)}s?\\b`, 'i').test(n);
+    return (
+      !allowed.includes(low) &&
+      new RegExp(`\\b${esc(low)}s?\\b`, 'i').test(n) &&
+      !onlyRemembered(n, low)
+    );
   });
   out.grounding = stray.length === 0 ? true : `invented ${stray[0]}`;
 

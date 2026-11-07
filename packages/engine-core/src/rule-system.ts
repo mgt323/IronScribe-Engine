@@ -57,6 +57,13 @@ export interface ResolvedRequest {
 export interface Fact {
   readonly key: string;
   readonly text: string;
+  /**
+   * Set by the orchestrator on facts an NPC's step produced: who acted. Rules never set it.
+   * Lets narration attribute outcomes without parsing text.
+   */
+  readonly source?: EntityId;
+  /** With `source`: the creatures that step was aimed at (resolved from the NPC's menu). */
+  readonly targetIds?: readonly EntityId[];
 }
 
 export interface Resolution {
