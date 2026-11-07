@@ -29,6 +29,7 @@ Thumbs.db
 
 # Editors / IDEs
 .idea/
+.cursor/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
