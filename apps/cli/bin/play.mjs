@@ -21,9 +21,11 @@ import { loadCatalog } from '@iron-scribe/system-dnd5e-2024';
 
 import {
   createCliSession,
-  defaultAdventurerSheet,
+  ARCHETYPES,
+  defaultSheet,
   formatCharacterSheet,
   handleCliLine,
+  isArchetype,
   suggestCharacterIdentity,
 } from '../dist/index.js';
 
@@ -37,6 +39,7 @@ Options:
   --model <name>         model id (openai: detected from /v1/models when omitted)
   --schema-mode <mode>   json_schema (default) or json_object
   --api-key <key>        or GEMINI_API_KEY / GOOGLE_API_KEY / OPENAI_API_KEY
+  --archetype <name>     rogue (default) or sorcerer
   --seed <value>         RNG seed (default: play)
   --help, -h
 `);
@@ -63,6 +66,7 @@ function parseArgs(argv) {
     schemaMode: 'json_schema',
     apiKey: envKey(),
     seed: 'play',
+    archetype: 'rogue',
     help: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -77,7 +81,11 @@ function parseArgs(argv) {
     else if (arg === '--schema-mode') options.schemaMode = required(argv, (index += 1));
     else if (arg === '--api-key') options.apiKey = required(argv, (index += 1));
     else if (arg === '--seed') options.seed = required(argv, (index += 1));
+    else if (arg === '--archetype') options.archetype = required(argv, (index += 1));
     else throw new Error(`Unknown argument: ${arg}`);
+  }
+  if (!isArchetype(options.archetype)) {
+    throw new Error(`Unknown archetype: ${options.archetype} (use ${ARCHETYPES.join(' or ')})`);
   }
   return options;
 }
@@ -111,8 +119,8 @@ async function adapterFor(options) {
   });
 }
 
-async function confirmHero(llm, catalog) {
-  const sheet = defaultAdventurerSheet();
+async function confirmHero(llm, catalog, archetype) {
+  const sheet = defaultSheet(archetype);
   const preview = {
     id: 'hero',
     name: 'Adventurer',
@@ -121,14 +129,14 @@ async function confirmHero(llm, catalog) {
     hp: { current: sheet.hpMax, max: sheet.hpMax },
     system: { character: sheet },
   };
-  stdout.write(formatCharacterSheet(preview, catalog, null));
+  stdout.write(formatCharacterSheet(preview, catalog, null, archetype));
   const rl = createInterface({ input: stdin, output: stdout });
   try {
     const description = await rl.question(
-      'Describe your rogue, or press Enter to keep the default name: ',
+      `Describe your ${archetype}, or press Enter to keep the default name: `,
     );
     if (!description.trim()) return { sheet, name: 'Adventurer', backstory: undefined };
-    const identity = await suggestCharacterIdentity(llm, description.trim());
+    const identity = await suggestCharacterIdentity(llm, description.trim(), archetype);
     stdout.write(`Name: ${identity.name}\n${identity.backstory}\n`);
     const answer = await rl.question('Use this name and backstory? [Y/n] ');
     if (answer.trim() !== '' && !/^y(es)?$/i.test(answer.trim())) {
@@ -148,11 +156,12 @@ if (options.help) {
 
 const catalog = loadCatalog();
 const llm = createLlmClient(await adapterFor(options));
-const hero = await confirmHero(llm, catalog);
+const hero = await confirmHero(llm, catalog, options.archetype);
 const session = createCliSession({
   seed: seedOf(options.seed),
   character: hero.sheet,
   characterName: hero.name,
+  archetype: options.archetype,
   ...(hero.backstory ? { backstory: hero.backstory } : {}),
   llm,
   catalog,

@@ -7,7 +7,7 @@ import {
   detectOpenAiModel,
 } from '@iron-scribe/llm';
 
-export const HELP = `Usage: node apps/cli/eval/run.mjs [options]
+export const HELP = `Usage: node apps/cli/eval/stage-7a/run.mjs [options]
   --url <url>          server (default http://127.0.0.1:5001)
   --provider <p>       openai (default) | gemini | oracle (rule-based stand-in, no server)
   --model <name>       model id (default: detected)

@@ -19,7 +19,7 @@ import {
 } from './helpers.js';
 import { narrateFacts } from './narrate.js';
 import { buildNarrationPrompt } from './prompts.js';
-import { advanceCombatUntilPlayer, runPlayerTurn } from './combat.js';
+import { advanceCombatUntilPlayer, rebindRequest, runDyingTurn, runPlayerTurn } from './combat.js';
 import { actionFrom, checkFrom, readIntent, spawnFrom } from './steps.js';
 import type { TurnIntent } from './schemas.js';
 import type {
@@ -136,6 +136,21 @@ export function createOrchestrator(options: {
     const prompts: StructuredPrompt[] = [];
     const rawResponses: string[] = [];
     try {
+      if (system.isActorDefeated?.(engine.state, actorId)) {
+        // Terminal: the hero is dead. No model call, no state change.
+        pending = null;
+        const none = draftOf(input, [], [], [], [], rngBefore, 'none', null);
+        return record(none, null, null);
+      }
+      const dying = system.playerTurnProcedure?.(engine.state, actorId) ?? null;
+      if (dying) {
+        // The player's text is flavor for the narration, never an action.
+        pending = null;
+        const facts = runDyingTurn(engine, system, actorId, dying);
+        const commits = engine.commits.slice(started);
+        const draft = draftOf(input, [], [], commits, facts, rngBefore, 'resolved', null);
+        return await finishResolved(draft, snapBefore, run);
+      }
       const answered = pending ? answerOf(pending, input) : null;
       pending = null;
       const intent =
@@ -227,12 +242,23 @@ export function createOrchestrator(options: {
     runTurn: (input, run) => runMechanics(input, run),
     runAction: (request, run) =>
       runDirect(
-        `act ${request.actionAlias} ${request.targetAlias ?? ''}`.trim(),
+        [
+          'act',
+          request.actionAlias,
+          ...(request.targetAliases?.length ? request.targetAliases : [request.targetAlias ?? '']),
+        ]
+          .join(' ')
+          .trim(),
         () => {
           const started = engine.commits.length;
-          const facts = runPlayerTurn(engine, system, actorId, request.targetAlias !== null, () => [
-            ...engine.perform(request).facts,
-          ]);
+          const menuBefore = engine.menu(actorId);
+          const dying = system.playerTurnProcedure?.(engine.state, actorId) ?? null;
+          const facts = dying
+            ? runDyingTurn(engine, system, actorId, dying)
+            : runPlayerTurn(engine, system, actorId, request.targetAlias !== null, () => {
+                const bound = rebindRequest(engine, request, menuBefore);
+                return bound === null ? [] : [...engine.perform(bound).facts];
+              });
           return { commits: engine.commits.slice(started), facts, clarification: null };
         },
         run,

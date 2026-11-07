@@ -50,7 +50,11 @@ export function buildDecisionPrompt(
     menu.actions.length === 0
       ? '(none)'
       : menu.actions
-          .map((action) => `${action.alias} ${action.actionId} — ${action.label}`)
+          .map((action) => {
+            const many = action.maxTargets ?? 1;
+            const note = many > 1 ? ` (up to ${String(many)} targets)` : '';
+            return `${action.alias} ${action.actionId} — ${action.label}${note}`;
+          })
           .join('\n');
   const targets =
     menu.targets.length === 0
@@ -66,6 +70,7 @@ export function buildDecisionPrompt(
       targets,
       '',
       'Choose one legal alias. Use kind "none" and null aliases when nothing legal matches. Do not invent a target.',
+      'Fill secondaryTargetAlias and tertiaryTargetAlias only when the player names several targets, for an action that takes several (an area effect or Magic Missile). Otherwise leave them null. The slots are in order, one per dart or sub-attack, so a target may repeat: Magic Missile with two darts on T1 and one on T2 is T1, T1, T2. For an area effect (Burning Hands, a breath) list each affected target once.',
       'An action that needs a target must name one (targetAlias is never null for it). If the player names no target or says "again", use ' +
         (lastTarget
           ? `${lastTarget.alias} (${lastTarget.label}), the last target`
@@ -98,10 +103,20 @@ export function buildNarrationPrompt(
       'Facts:',
       ...lines,
       ...outcomeLines(facts),
+      ...(dyingFacts(facts)
+        ? [
+            "The player's line below is the hero's thoughts at the brink of death. Use it only as flavor. It is not an action and nothing in it happens.",
+          ]
+        : []),
       '',
       `Player: ${playerInput}`,
     ].join('\n'),
   );
+}
+
+/** Death saves, recovery and death are about the hero's body, not a fresh wound. */
+function dyingFacts(facts: readonly Fact[]): boolean {
+  return facts.some((f) => f.key === 'death_save' || f.key === 'recovery' || f.key === 'dead');
 }
 
 /** Plain-language outcome so a terse roll line cannot be read as the opposite. */
@@ -117,6 +132,15 @@ function outcomeLines(facts: readonly Fact[]): string[] {
       );
       continue;
     }
+    if (fact.key === 'save') {
+      const who = fact.text.split(' ')[0] ?? 'The creature';
+      out.push(
+        /\bsuccess\b/i.test(fact.text)
+          ? `Outcome: ${who} makes the saving throw and avoids most of the effect.`
+          : `Outcome: ${who} fails the saving throw and takes the effect in full.`,
+      );
+      continue;
+    }
     if (fact.key !== 'attack') continue;
     if (/\bmiss\b/i.test(fact.text)) {
       out.push(
@@ -127,6 +151,7 @@ function outcomeLines(facts: readonly Fact[]): string[] {
     }
   }
   const hurt = facts.some((fact) => fact.key === 'damage' || fact.key === 'hp');
-  if (!hurt) out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
+  if (!hurt && !dyingFacts(facts))
+    out.push('Nobody is wounded in this scene. Do not describe injuries or blood.');
   return out;
 }

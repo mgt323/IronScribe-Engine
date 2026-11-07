@@ -26,6 +26,15 @@ export const SPELL_MECHANICS: Readonly<Record<string, SpellMechanics>> = {
     cantripDice: cantrip('d10'),
     upcast: null,
   },
+  // SRD 5.2.1, Spells: Ray of Frost (the Speed reduction stays as text)
+  'ray-of-frost': {
+    ...none,
+    resolution: 'attack',
+    attack: 'ranged',
+    damage: { dice: '1d8', type: 'cold', addSpellcastingMod: false },
+    cantripDice: cantrip('d8'),
+    upcast: null,
+  },
   // SRD 5.2.1, Spells: Sacred Flame
   'sacred-flame': {
     ...none,

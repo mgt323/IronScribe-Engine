@@ -25,11 +25,26 @@ function hitPoints(turn) {
   const lost = (id) => turn.before.hp[id] - turn.after.hp[id];
   const hitFacts = (key) =>
     turn.result.facts.filter((f) => f.key === key && !/miss/i.test(f.text)).length;
-  if (lost(HERO) > 0 && hitFacts('npc_attack') === 0) bad.push('hero lost hp with no NPC hit');
+  // A spell or a save action ("<id> casts/uses ...") hurts through `save` and `damage` facts, not a hit.
+  const effect =
+    turn.result.facts.some((f) => f.key === 'use') &&
+    turn.result.facts.some((f) => f.key === 'damage');
+  // A Hydra regrowing heads is the one way a hostile regains hit points (a `hydra` fact says so).
+  const regrew = turn.result.facts.some((f) => f.key === 'hydra' && /grows/.test(f.text));
+  if (lost(HERO) > 0 && hitFacts('npc_attack') === 0 && !effect)
+    bad.push('hero lost hp with no NPC hit');
   for (const id of Object.keys(turn.after.hp)) {
-    if (id !== HERO && lost(id) > 0 && hitFacts('attack') === 0)
+    // A hostile may hurt a friendly NPC (7B.3 policy), so an NPC hit also explains a loss.
+    if (
+      id !== HERO &&
+      lost(id) > 0 &&
+      hitFacts('attack') === 0 &&
+      hitFacts('npc_attack') === 0 &&
+      !effect
+    )
       bad.push(`${id} lost hp with no hero hit`);
-    if (turn.after.hp[id] > (turn.before.hp[id] ?? Infinity)) bad.push(`${id} gained hp`);
+    if (turn.after.hp[id] > (turn.before.hp[id] ?? Infinity) && !regrew)
+      bad.push(`${id} gained hp`);
   }
   return bad;
 }

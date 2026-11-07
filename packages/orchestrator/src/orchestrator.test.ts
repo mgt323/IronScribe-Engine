@@ -54,7 +54,15 @@ describe('turn history', () => {
           wantsAction: true,
         }),
       },
-      { text: intent({ kind: 'action', actionAlias: 'A1', targetAlias: 'T1' }) },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: 'A1',
+          targetAlias: 'T1',
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
       { chunks: ['The rat', ' falls.'] },
     ]);
     const before = engine.state.rng;
@@ -88,8 +96,24 @@ describe('turn history', () => {
           wantsAction: true,
         }),
       },
-      { text: intent({ kind: 'action', actionAlias: null, targetAlias: null }) },
-      { text: intent({ kind: 'action', actionAlias: null, targetAlias: null }) },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: null,
+          targetAlias: null,
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: null,
+          targetAlias: null,
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
     ]);
     const before = engine.snapshot();
     await expect(orchestrator.runTurn('A rat appears and I poke it.')).rejects.toBeInstanceOf(
@@ -111,7 +135,15 @@ describe('turn history', () => {
       llm: failingStream(
         createScriptedLlmClient([
           { text: intent({ ...idle, wantsAction: true }) },
-          { text: intent({ kind: 'action', actionAlias: 'A2', targetAlias: null }) },
+          {
+            text: intent({
+              kind: 'action',
+              actionAlias: 'A2',
+              targetAlias: null,
+              secondaryTargetAlias: null,
+              tertiaryTargetAlias: null,
+            }),
+          },
           { chunks: ['The hero', ' waits.'] },
         ]),
         1,
@@ -134,11 +166,27 @@ describe('turn history', () => {
   it('does not record a clarification or a refusal on the undo stack', async () => {
     const { engine, orchestrator } = scene([
       { text: intent({ ...idle, wantsAction: true }) },
-      { text: intent({ kind: 'action', actionAlias: 'A2', targetAlias: null }) },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: 'A2',
+          targetAlias: null,
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
       { text: 'Waited.' },
       { text: intent({ ...idle, spawnQuery: 'goblin', spawnCount: 1, spawnAttitude: 'hostile' }) },
       { text: intent({ ...idle, wantsAction: true }) },
-      { text: intent({ kind: 'none', actionAlias: null, targetAlias: null }) },
+      {
+        text: intent({
+          kind: 'none',
+          actionAlias: null,
+          targetAlias: null,
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
     ]);
     await orchestrator.runTurn('I wait.');
     orchestrator.undoTurn();
@@ -199,7 +247,15 @@ describe('turn history', () => {
   it('drops a bare ability check beside an action', async () => {
     const { orchestrator } = scene([
       { text: intent({ ...idle, checkAbility: 'dex', wantsAction: true }) },
-      { text: intent({ kind: 'action', actionAlias: 'A2', targetAlias: null }) },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: 'A2',
+          targetAlias: null,
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
       { text: 'Waited.' },
     ]);
     const result = await orchestrator.runTurn('I wait again.');

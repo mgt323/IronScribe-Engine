@@ -56,6 +56,7 @@ describe('spell text parser (mechanics: parsed)', () => {
   it('hand-written overrides win and are marked', () => {
     expect(spell('fire-bolt').mechanics).toBe('override');
     expect(spell('magic-missile').mechanics).toBe('override');
+    expect(spell('ray-of-frost').mechanics).toBe('override');
   });
 
   it('spells the parser cannot read stay text-only with no mechanics', () => {
@@ -70,8 +71,8 @@ describe('spell text parser (mechanics: parsed)', () => {
     for (const s of c.spells.list()) counts[s.mechanics] = (counts[s.mechanics] ?? 0) + 1;
     expect(counts).toMatchInlineSnapshot(`
       {
-        "override": 5,
-        "parsed": 132,
+        "override": 6,
+        "parsed": 131,
         "text-only": 202,
       }
     `);

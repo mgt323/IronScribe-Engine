@@ -4,12 +4,13 @@
 
 Single-player theater-of-the-mind REPL. Free text and slash commands go through
 `@iron-scribe/orchestrator`, which is the only caller of the engine. The
-player is one Level 1 Rogue (`defaultAdventurerSheet`). The model may suggest
+player is one Level 1 Rogue (`defaultAdventurerSheet`, default) or Sorcerer
+(`defaultSorcererSheet`, `--archetype sorcerer`). The model may suggest
 a name and a backstory. It does not draft scores, hit points, or gear.
 
 ## Public interface
 
-- `createCliSession({ seed, character, characterName, backstory?, llm, catalog })`
+- `createCliSession({ seed, character, characterName, backstory?, archetype?, llm, catalog })`
   spawns the hero before the orchestrator exists, so `/undo` cannot remove them
 - `handleCliLine(session, line, writer)` — `/status`, `/sheet`, `/act`, `/spawn`,
   `/init`, `/undo`, `/redo`, `/log`, `/save`, `/help`, `/quit`. Read-only
@@ -34,7 +35,7 @@ a name and a backstory. It does not draft scores, hit points, or gear.
   node apps/cli/eval/legacy/eval-play.mjs --url http://127.0.0.1:5001 --runs 3 --out play.jsonl
   ```
 
-- `eval/run.mjs` is the Stage 7A live eval (`pnpm --filter @iron-scribe/cli eval:7a -- <flags>`), replacing
+- `eval/stage-7a/run.mjs` is the Stage 7A live eval (`pnpm --filter @iron-scribe/cli eval:7a -- <flags>`), replacing
   `eval/legacy/eval-play.mjs` for combat work. It reports three layers apart: **engine invariants** (audited on
   every turn of every case: HP range, one initiative per encounter, round +1 per hero action, order
   respected, nobody acts when down, no mechanics in narration), **case goals**, and **model behavior**
@@ -42,12 +43,41 @@ a name and a backstory. It does not draft scores, hit points, or gear.
   (monsters from `/spawn`, dice pinned by setup commits) and `full` (prose spawns, policy-driven
   fights). `--provider oracle` is a rule-based stand-in: it proves the harness with no server and
   gives a ceiling. Dice-dependent cases skip (not fail) when the situation did not occur. `--summary`
-  plus `--compare` diff two models. Files: `eval/cases/*` (cases), `eval/lib/*` (driver, audit,
-  policy, soft probes, report).
+  plus `--compare` diff two models. Files: `eval/stage-7a/cases/*` (cases), `eval/stage-7a/lib/*`
+  (driver, audit, policy, soft probes, report).
+
+- `eval/stage-7b/run.mjs` is the Stage 7B live eval (`pnpm --filter @iron-scribe/cli eval:7b -- <flags>`). Same
+  three layers and flags as 7A, built on the 7A `lib/` (it imports driver, client, report, soft probes). 7B adds
+  the Sorcerer archetype per case, a snapshot with death saves, spell slots, limited actions and Hydra heads,
+  and its own oracle (spells, several targets). Categories: `dying` (death saves, one narration-only model call,
+  terminal death, undo, a real downing), `spell` (cantrips, area and multi-target, Magic Missile spread, slots
+  running dry, undo giving a slot back, spells that must not resolve), `npc` (Fire Breath and recharge,
+  Multiattack, Hydra heads, lowest-HP target policy), `e2e` (prose spawns, full fights, the dying spell played out,
+  a dead hero poked once). 7B audit adds: tally bounds, dead is terminal and costs no model call, a dying turn is one
+  call and no hostile attack, slots only fall through one leveled cast, no expended action reused, Hydra heads move
+  only with a fact. Model metrics: spell, target, several-target accuracy and "declines illegal". A case with
+  `known:` is a documented gap, shown apart and out of every rate. Always use `--provider oracle` first: a failure
+  there is the engine or the harness, not the model.
+
+  ```bash
+  pnpm --filter @iron-scribe/cli build
+  pnpm --filter @iron-scribe/cli eval:7b -- --url http://127.0.0.1:5001 --runs 3 --out 7b.jsonl --summary 7b.json
+  ```
+
+## Archetypes and spells (7B.2)
+
+`src/archetypes.ts`: `ARCHETYPES`, `defaultSheet(archetype)`, `SORCERER_ALLOWLIST` (fire-bolt,
+ray-of-frost, mage-hand, prestidigitation, burning-hands, magic-missile; no Sacred Flame or Cure
+Wounds, which are tested with a test-only Cleric fixture in the system package). The Sorcerer is the
+SRD Level 1 sheet: 8 HP, AC 12, CHA 16, dagger and light crossbow, two level 1 slots; Innate Sorcery is
+deferred. `createCliSession` validates every spell id against the catalog. `/sheet` shows spell attack,
+save DC, cantrips, prepared spells, and slots left. `/act A# [T#] [T#] [T#]` names up to three
+targets (area spells, Magic Missile); `/undo` restores spent slots with the rest of the turn.
 
 ## Combat
 
-`/status` shows `Combat: round N`, with a suspended note when the hero cannot act.
+`/status` shows `Combat: round N`, with a suspended note when the hero cannot act, and
+`Status: DYING (successes S/3, failures F/3)` or `Status: DEAD`. While dying, any input rolls a death save.
 
 ## Test rules
 

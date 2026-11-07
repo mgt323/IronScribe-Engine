@@ -61,6 +61,7 @@ describe('engine-run combat loop', () => {
     engine.commit('rat', [{ type: 'entity.spawned', entity: makeEntity('rat_1') }]);
     const facts = advanceCombatUntilPlayer(engine, system, 'hero');
     expect(log).toEqual(['rat_1']);
-    expect(facts.map((fact) => fact.key)).toEqual(['wait']);
+    // The fake turn-end procedure (`check`) reports its fact too.
+    expect(facts.map((fact) => fact.key)).toEqual(['wait', 'check']);
   });
 });

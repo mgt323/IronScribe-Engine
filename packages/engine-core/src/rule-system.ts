@@ -16,6 +16,8 @@ export interface MenuAction {
   readonly actionId: string;
   readonly label: string;
   readonly needsTarget: boolean;
+  /** How many distinct targets the action takes (area effects, Magic Missile). Default 1. */
+  readonly maxTargets?: number;
 }
 
 export interface MenuTarget {
@@ -35,13 +37,21 @@ export interface ActionRequest {
   readonly actorId: EntityId;
   readonly actionAlias: string;
   readonly targetAlias: string | null;
+  /**
+   * Extra targets for an action that takes several. When present and non-empty it
+   * is the whole list (`targetAlias`, if also set, must equal its first entry).
+   */
+  readonly targetAliases?: readonly string[];
 }
 
 /** What RuleSystem.resolve receives. */
 export interface ResolvedRequest {
   readonly actorId: EntityId;
   readonly action: MenuAction;
+  /** The first target, or null. */
   readonly target: MenuTarget | null;
+  /** Every distinct target in the order the caller gave them. Empty when none. */
+  readonly targets: readonly MenuTarget[];
 }
 
 export interface Fact {
@@ -132,5 +142,13 @@ export interface RuleSystem {
    * encounter is active. `procedure` combat steps already end their own turn.
    */
   turnEnd?(state: GameState, actorId: EntityId): Procedure | null;
+  /**
+   * The actor's whole turn when they cannot choose from a menu (D&D: a Death Saving
+   * Throw at 0 HP). Non-null means: run this procedure, skip the model, and treat the
+   * player's text as flavor only.
+   */
+  playerTurnProcedure?(state: GameState, actorId: EntityId): Procedure | null;
+  /** True when the actor is out of the game for good (D&D: dead). Terminal. */
+  isActorDefeated?(state: GameState, actorId: EntityId): boolean;
   applySystemEvent?(state: GameState, event: SystemEvent): GameState;
 }

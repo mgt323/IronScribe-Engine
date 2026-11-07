@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Live Stage 7A eval: a real model, the orchestrator, and the real D&D rules, driving
+ * Live Stage 7B eval: a real model, the orchestrator, and the real D&D rules, driving
  * combat from free text. Three layers per run, reported apart:
  *   engine invariants  audited on every turn of every case (a violation is an engine bug)
- *   case goals         what this scenario was built to show
- *   model behavior     intent accuracy (target, weapon), narration probes, latency
+ *   case goals         what this scenario was built to show (7B: dying and death saves,
+ *                      spells and slots, several targets, recharge, Multiattack, Hydra, NPC policy)
+ *   model behavior     spell / target accuracy, refusals, narration probes, latency
  *
  *   pnpm --filter @iron-scribe/cli build
- *   node apps/cli/eval/run.mjs --url http://127.0.0.1:5001 --runs 3 --summary a.json
+ *   node apps/cli/eval/stage-7a/run.mjs --url http://127.0.0.1:5001 --runs 3 --summary a.json
  *
  * Exit codes: 0 ok, 1 server unreachable / bad arguments, 2 a threshold failed.
  */
@@ -16,9 +17,10 @@ import { writeFileSync } from 'node:fs';
 import { LlmError } from '@iron-scribe/llm';
 import { loadCatalog } from '@iron-scribe/system-dnd5e-2024';
 
+import { DYING_CASES } from './cases/dying.mjs';
 import { E2E_CASES } from './cases/e2e.mjs';
-import { ENGINE_CASES } from './cases/engine-loop.mjs';
-import { FULL_CASES } from './cases/full-flow.mjs';
+import { NPC_CASES } from './cases/npc.mjs';
+import { SPELL_CASES } from './cases/spells.mjs';
 import { auditCase } from './lib/audit.mjs';
 import { HELP, makeClient, parseArgs, unreachable } from './lib/client.mjs';
 import { Inconclusive, createCtx } from './lib/driver.mjs';
@@ -28,7 +30,7 @@ import { monsterNames, probeCase } from './lib/soft.mjs';
 const kindOf = (c) => c.kind ?? 'positive';
 
 function selectCases(o) {
-  let cases = [...ENGINE_CASES, ...FULL_CASES, ...E2E_CASES];
+  let cases = [...DYING_CASES, ...SPELL_CASES, ...NPC_CASES, ...E2E_CASES];
   if (o.tier) cases = cases.filter((c) => c.tier === o.tier);
   if (o.only) cases = cases.filter((c) => c.id.includes(o.only) || c.category.includes(o.only));
   if (o.kind) cases = cases.filter((c) => kindOf(c) === o.kind);
@@ -43,6 +45,7 @@ async function runCase(c, o, client, catalog, names, run) {
     catalog,
     timeoutMs: o.timeoutMs,
     heroHp: o.heroHp ?? c.heroHp,
+    archetype: c.archetype,
   });
   const started = Date.now();
   let error = null;
@@ -70,6 +73,7 @@ async function runCase(c, o, client, catalog, names, run) {
     category: c.category,
     tier: c.tier,
     kind: kindOf(c),
+    known: c.known ?? null,
     status,
     goal,
     invariants,

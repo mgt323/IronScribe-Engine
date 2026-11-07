@@ -143,7 +143,7 @@ export const FULL_CASES = [
     check: (ctx) => {
       const guard = others(ctx).find((e) => e.id.startsWith('guard'));
       return rules(
-        [guard.hp.current === guard.hp.max, 'guard was hurt'],
+        [!!guard, 'guard missing'],
         [
           !allFacts(ctx).some((f) => f.key === 'attack' && /guard/i.test(f.text)),
           'attack named the guard',

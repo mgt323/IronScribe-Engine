@@ -100,7 +100,15 @@ describe('cli play', () => {
           wantsAction: true,
         }),
       },
-      { text: intent({ kind: 'action', actionAlias: 'A1', targetAlias: 'T1' }) },
+      {
+        text: intent({
+          kind: 'action',
+          actionAlias: 'A1',
+          targetAlias: 'T1',
+          secondaryTargetAlias: null,
+          tertiaryTargetAlias: null,
+        }),
+      },
       { text: 'Steel flashes.' },
     ]);
     const session = createCliSession({

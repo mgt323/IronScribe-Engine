@@ -14,16 +14,10 @@ import { abilityCheck, savingThrow, skillCheck, type CheckResult } from './check
 import { runCombatProcedure } from './combat.js';
 import { readConditions } from './conditions.js';
 import { readCreature } from './creature.js';
+import { runDeathSave } from './death-save-roll.js';
 import { rollInitiative } from './initiative.js';
-
-const ABILITY_LABEL: Record<AbilityName, string> = {
-  str: 'Strength',
-  dex: 'Dexterity',
-  con: 'Constitution',
-  int: 'Intelligence',
-  wis: 'Wisdom',
-  cha: 'Charisma',
-};
+import { ABILITY_LABEL } from './modifiers.js';
+import { runRecharge } from './usage.js';
 
 const CheckProcedure = z.strictObject({
   kind: z.literal('check'),
@@ -42,6 +36,14 @@ const InitiativeProcedure = z.strictObject({
   kind: z.literal('initiative'),
   surprised: z.array(z.string()),
 });
+const DeathSaveProcedure = z.strictObject({
+  kind: z.literal('deathSave'),
+  actorId: z.string(),
+});
+const RechargeProcedure = z.strictObject({
+  kind: z.literal('recharge'),
+  actorId: z.string(),
+});
 const CombatProcedure = z.strictObject({
   kind: z.enum(['advanceTurn', 'advanceRound', 'endEncounter']),
 });
@@ -52,6 +54,8 @@ const ProcedureInput = z.discriminatedUnion('kind', [
   CheckProcedure,
   SaveProcedure,
   InitiativeProcedure,
+  DeathSaveProcedure,
+  RechargeProcedure,
 ]);
 
 function skillAbility(catalog: Catalog, skillId: string): AbilityName {
@@ -72,7 +76,7 @@ function actor(state: GameState, actorId: string) {
   return entity;
 }
 
-/** Engine-triggered check, save, or initiative. Payloads are validated on entry. */
+/** Engine-triggered check, save, death save, or initiative. Payloads are validated on entry. */
 export function runDndProcedure(
   state: GameState,
   procedure: Procedure,
@@ -90,6 +94,8 @@ export function runDndProcedure(
     return runCombatProcedure(state, input.kind);
   }
   if (input.kind === 'initiative') return rollInitiative(state, rng, input.surprised, catalog);
+  if (input.kind === 'recharge') return runRecharge(state, input.actorId, rng);
+  if (input.kind === 'deathSave') return runDeathSave(state, input.actorId, rng);
 
   const entity = actor(state, input.actorId);
   const view = readCreature(entity, catalog);

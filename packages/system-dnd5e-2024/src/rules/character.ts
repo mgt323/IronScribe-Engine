@@ -1,6 +1,7 @@
 import type { Entity, EntityId } from '@iron-scribe/engine-core';
 import { z } from 'zod';
 
+import type { Catalog } from '../catalog/catalog.js';
 import { Ability } from '../catalog/schema.js';
 
 const AbilityScores = z.strictObject({
@@ -32,12 +33,42 @@ export const Character = z.strictObject({
   armor: z.string().nullable(),
   shield: z.boolean(),
   hpMax: z.number().int().positive(),
+  /** Null for a character who casts nothing. */
+  spellcastingAbility: Ability.nullable().default(null),
+  /** Catalog spell ids. Cantrips cost nothing; prepared spells spend a slot of their level. */
+  cantrips: z.array(z.string()).default([]),
+  preparedSpells: z.array(z.string()).default([]),
+  /** Total spell slots by level ("1": 2). Spent slots live in `entity.system.spellSlotsUsed`. */
+  spellSlots: z.record(z.string(), z.number().int().min(0)).default({}),
 });
 export type Character = z.infer<typeof Character>;
+export type CharacterInput = z.input<typeof Character>;
+
+/**
+ * Every spell id on the sheet must exist in the catalog (and in `allowlist` when given).
+ * Throws a plain Error naming the first bad id.
+ */
+export function validateCharacterSpells(
+  character: Character,
+  catalog: Pick<Catalog, 'spells'>,
+  allowlist?: ReadonlySet<string>,
+): void {
+  for (const id of [...character.cantrips, ...character.preparedSpells]) {
+    const spell = catalog.spells.get(id);
+    if (!spell) throw new Error(`unknown spell: ${id}`);
+    if (allowlist && !allowlist.has(id)) throw new Error(`spell not allowed: ${id}`);
+  }
+  if (
+    (character.cantrips.length > 0 || character.preparedSpells.length > 0) &&
+    character.spellcastingAbility === null
+  ) {
+    throw new Error('a sheet with spells needs a spellcastingAbility');
+  }
+}
 
 /** Spawn a player character. Hit points are the sheet maximum, never rolled here. */
 export function characterToEntity(
-  character: Character,
+  character: CharacterInput,
   entityId: EntityId,
   options?: { name?: string },
 ): Entity {

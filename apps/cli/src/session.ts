@@ -4,13 +4,22 @@ import { createEngine, createInitialState, type SpawnRequest } from '@iron-scrib
 import type { LlmClient } from '@iron-scribe/llm';
 import { createOrchestrator, type Orchestrator, type TurnResult } from '@iron-scribe/orchestrator';
 import {
+  Character as CharacterSheet,
   characterToEntity,
   createDnd5eSystem,
+  validateCharacterSpells,
   type Catalog,
   type Character,
 } from '@iron-scribe/system-dnd5e-2024';
 
+import type { Archetype } from './archetypes.js';
 import { formatCharacterSheet, formatSceneStatus } from './setup.js';
+
+interface ActionRequestInput {
+  readonly actionAlias: string;
+  readonly targetAlias: string | null;
+  readonly targetAliases?: readonly string[];
+}
 
 const ATTITUDES = ['hostile', 'neutral', 'friendly'] as const;
 type Attitude = (typeof ATTITUDES)[number];
@@ -24,6 +33,7 @@ export interface CliSession {
   readonly actorId: 'hero';
   readonly characterName: string;
   readonly backstory: string | null;
+  readonly archetype: Archetype;
   readonly catalog: Catalog;
   readonly orchestrator: Orchestrator;
 }
@@ -33,9 +43,11 @@ export function createCliSession(options: {
   character: Character;
   characterName: string;
   backstory?: string;
+  archetype?: Archetype;
   llm: LlmClient;
   catalog: Catalog;
 }): CliSession {
+  validateCharacterSpells(CharacterSheet.parse(options.character), options.catalog);
   const system = createDnd5eSystem({ catalog: options.catalog });
   const engine = createEngine({
     system,
@@ -52,6 +64,7 @@ export function createCliSession(options: {
     actorId: 'hero',
     characterName: options.characterName,
     backstory: options.backstory ?? null,
+    archetype: options.archetype ?? 'rogue',
     catalog: options.catalog,
     orchestrator: createOrchestrator({
       engine,
@@ -90,18 +103,23 @@ function parseSpawn(rest: string): SpawnRequest {
   return attitude === undefined ? { query, count } : { query, count, attitude };
 }
 
-function parseAct(rest: string): { actionAlias: string; targetAlias: string | null } {
+const ACT_USAGE = 'Usage: /act A# [T#] [T#] [T#]';
+
+function parseAct(rest: string): ActionRequestInput {
   const tokens = rest
     .trim()
     .split(/\s+/)
     .filter((token) => token !== '');
   const actionAlias = tokens[0];
-  const targetAlias = tokens[1] ?? null;
-  if (!actionAlias || !/^A\d+$/.test(actionAlias) || tokens.length > 2) {
-    throw new Error('Usage: /act A# [T#]');
-  }
-  if (targetAlias !== null && !/^T\d+$/.test(targetAlias)) throw new Error('Usage: /act A# [T#]');
-  return { actionAlias, targetAlias };
+  const targets = tokens.slice(1);
+  if (!actionAlias || !/^A\d+$/.test(actionAlias) || targets.length > 3) throw new Error(ACT_USAGE);
+  if (!targets.every((alias) => /^T\d+$/.test(alias))) throw new Error(ACT_USAGE);
+  const targetAlias = targets[0] ?? null;
+  return {
+    actionAlias,
+    targetAlias,
+    ...(targets.length > 1 ? { targetAliases: targets } : {}),
+  };
 }
 
 function messageOf(error: unknown): string {
@@ -142,8 +160,8 @@ async function printTurn(
 
 const HELP = `Commands:
   /status, /scene     who is here, and the legal A# / T# menu
-  /sheet              Level 1 Rogue sheet
-  /act A# [T#]        take a menu action
+  /sheet              your Level 1 character sheet
+  /act A# [T#] [T#] [T#]  take a menu action (area spells take up to 3 targets)
   /spawn <query> [count] [hostile|neutral|friendly]
   /init               roll initiative
   /undo, /redo        one whole turn
@@ -206,7 +224,9 @@ export async function handleCliLine(
         return false;
       case '/sheet':
         if (!hero) throw new Error('No character');
-        writer.write(formatCharacterSheet(hero, session.catalog, session.backstory));
+        writer.write(
+          formatCharacterSheet(hero, session.catalog, session.backstory, session.archetype),
+        );
         return false;
       case '/act': {
         const request = parseAct(rest);

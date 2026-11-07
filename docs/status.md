@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A done; 7B, 7C open)     | In progress |
+| 7     | Encounters (7A, 7B done; 7C open)     | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -208,3 +208,76 @@ Scope record for 7A and the 7B and 7C backlogs: `docs/stage-7-encounters.md`.
 - NPC attack facts use key `npc_attack`: `Name (Action): <roll text>`
 - Out of scope (7B, 7C): death saves, dynamic Hydra heads, multi-target Multiattack,
   mid-combat spawns, Hide, surprise, scene shifts, spells
+
+## Stage 7B.1 notes (dying and death saves)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- `entity.system.deathSaves` (`{successes, failures, stable, dead}`) is written only by events.
+  `deathSave` is a procedure: d20 minus 2 per Exhaustion level vs DC 10; natural 1 and 20 use the raw
+  die. Instant death on massive damage; damage at 0 HP adds failures; healing wakes; Exhaustion 6 kills
+- Dying turn: `RuleSystem.playerTurnProcedure` makes the hero's turn a death save with no intent or
+  decision call; player text is narration flavor only. Natural 20: no `turnEnd`, the hero keeps the turn.
+  A hero downed by a faster NPC skips the declared action
+- Iron Scribe rules (not SRD): a solo hero who stabilizes rests 1d4 hours, wakes at 1 HP and the
+  encounter ends; hostiles hold against a dying hero
+- `combatPhase`: none, active, dying, suspended (stable or incapacitated), dead (terminal, encounter kept).
+  `/status` shows `Status: DYING (...)` or `Status: DEAD`
+- Tests: `death-saves.test.ts`, `combat.test.ts` (system), `apps/cli/src/dying.test.ts`
+  (scripted RNG, undo/redo). Oracle eval 100%, 0 invariant violations. Live model eval not rerun
+
+## Stage 7B.2 notes (spells, save actions, several targets)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- engine-core: `ActionRequest.targetAliases`, `MenuAction.maxTargets`, `ResolvedRequest.targets`
+  (`target` is the first). The model schema stays flat: `targetAlias`, `secondaryTargetAlias`,
+  `tertiaryTargetAlias`, all required
+- D&D: one dispatcher `resolve-action.ts`; `spells.ts`, `spell-data.ts`, `resolve-save.ts`,
+  `deal-damage.ts`, `usage.ts`. `Character` gained `spellcastingAbility`, `cantrips`, `preparedSpells`,
+  `spellSlots`; spent slots are `entity.system.spellSlotsUsed`, limited monster actions are
+  `entity.system.usage`. Save effects roll damage once; Magic Missile darts have no spillover;
+  `onSuccess: 'other'` save actions are not offered. No upcasting
+- CLI: `--archetype rogue|sorcerer`, `defaultSorcererSheet`, `/act A# [T#] [T#] [T#]`, `/sheet` shows
+  spells and slots
+- Eval harness: oracle returns the new decision fields; audit accepts spell and save-action damage
+- Tests: `spells.test.ts`, `save-actions.test.ts`, `menu-multi.test.ts`, `schemas.test.ts`,
+  `prompts.test.ts`, `apps/cli/src/sorcerer.test.ts`. Oracle eval 100%. No live-model eval for spells yet
+
+## Stage 7B.3 notes (Multiattack variants, Hydra, recharge, NPC policy)
+
+Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024/AGENTS.md`.
+
+- `expandMultiattackVariants` returns every complete variant; the menu has one labelled entry each
+  (`monster:multiattack`, `monster:multiattack:<n>`). Multi-target Multiattack follows
+  `targetAliases`, no spillover
+- Hydra Multiple Heads is complete except Reactive Heads (reactions). SRD text says it regains a flat
+  20 HP when it grows heads; that is implemented (not 10 per head)
+- Recharge is rolled at the start of the NPC's turn by a `recharge` procedure; per-day counts and
+  per-rest expenditure live in `entity.system.usage`
+- NPC policy (Iron Scribe, not SRD): `chooseNpcAction`. Hostiles may now attack friendly NPCs, so the
+  7A eval cases that said a friendly guard is never hurt were relaxed, and the audit accepts NPC-on-NPC hits
+- Orchestrator fix: facts of the turn-end procedure are no longer dropped (the Hydra regrowth fact)
+- Not done: monster Spellcasting and per-day spells (a Multiattack choice naming a spell is dropped),
+  conditions from failed saves, Reactive Heads, live-model eval of the new paths (oracle eval is 100%)
+- Tests: `multiattack.test.ts`, `hydra.test.ts`, `npc-policy.test.ts` (recharge, policy),
+  `apps/cli/src/stage7b3.test.ts` (one undo and redo over recharge and Hydra turns)
+
+## Stage 7B eval (live)
+
+- The 7A eval moved to `apps/cli/eval/stage-7a/` (`eval:7a`). The 7B eval is `apps/cli/eval/stage-7b/`
+  (`eval:7b`): 22 cases in `dying`, `spell`, `npc`, `e2e`; flags in `--help`. Details in `apps/cli/AGENTS.md`
+- Oracle run: 100% over several seeds, 0 invariant violations. Live run after the alias fix (`eval-stage7b.json`,
+  KoboldCpp, gemma-4-26B-A4B, 3 runs, 61 counted, 2 skipped): pass 100% in every category, 0 invariant violations,
+  0 schema failures, no flaky cases. Model behavior: spell 100% (24/24), several targets 100% (6/6), target 87.5% (7/8),
+  "declines illegal" 75% (9/12: a cantrip substituted for a spell with no slot). Narration probes (soft): `outcome` 64%,
+  `hurt` 90%, `grounding` 95%, `dyingTruth` 97%, `noMechanics` 100%, `spellShown` 100% (outcome, hurt and grounding are
+  7C items). Latency p50 1.7 s, p95 3.0 s, 1.9 calls and 919 tokens per turn
+- Fixed (found by the eval, `npc-alias-survives-friend-falling`): the hero's `T#` was chosen before NPCs ahead of the hero
+  acted, so a fallen friendly NPC renumbered the targets. `rebindRequest` (orchestrator `combat.ts`) re-aims the request
+  at the same creatures and action under the current menu; a target that is gone drops out, and with none left the
+  hero's action is skipped (like a hero downed first). Used by free text and `/act`
+- Known gap (`e2e-spawn-young-red-dragon`): the model drops "young" from "young red dragon", so the GM asks which dragon
+  and the answer is read the same way (7C spawn work)
+- Target slots are per dart or sub-attack: repeats are kept (`T1, T1, T2`). Magic Missile: one slot takes all
+  darts, two give `[a, b, a]`, three are exact. Area saves still hit each creature once (deduplicated)

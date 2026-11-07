@@ -28,7 +28,8 @@ export interface AppliedDamage {
 
 type DamageEntry = MonsterAction['damage'][number];
 
-function rollDice(formula: string, rng: Rng, critical: boolean): number {
+/** Roll a dice formula once. A critical hit doubles the dice, not the modifier. */
+export function rollDice(formula: string, rng: Rng, critical: boolean): number {
   const result = critical ? roll(formula, rng, { critical: true }) : roll(formula, rng);
   return result.total;
 }
