@@ -40,7 +40,7 @@ export function advanceCombatUntilPlayer(
     const commit = engine.perform(step.request);
     facts.push(...npcFacts(name, commit.label, commit.facts));
     const end = system.turnEnd?.(engine.state, step.request.actorId) ?? null;
-    if (end) engine.runProcedure('combat', end);
+    if (end) facts.push(...engine.runProcedure('combat', end).facts);
   }
   throw new EngineError(
     'combat_loop_exceeded',
@@ -68,7 +68,7 @@ export function runDyingTurn(
     (hero?.hp.current ?? 0) <= 0 && system.isActorDefeated?.(engine.state, actorId) !== true;
   if (!stillDown) return facts;
   const end = system.turnEnd?.(engine.state, actorId) ?? null;
-  if (end) engine.runProcedure('combat', end);
+  if (end) facts.push(...engine.runProcedure('combat', end).facts);
   facts.push(...advanceCombatUntilPlayer(engine, system, actorId));
   return facts;
 }
@@ -99,7 +99,7 @@ export function runPlayerTurn(
   if (progressed && engine.menu(actorId).actions.length === 0) return facts;
   facts.push(...act());
   const end = system.turnEnd?.(engine.state, actorId) ?? null;
-  if (end) engine.runProcedure('combat', end);
+  if (end) facts.push(...engine.runProcedure('combat', end).facts);
   facts.push(...advanceCombatUntilPlayer(engine, system, actorId));
   return facts;
 }

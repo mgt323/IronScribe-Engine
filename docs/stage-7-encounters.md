@@ -34,8 +34,7 @@ Design decisions worth remembering:
 
 ## 7B: combat rules
 
-Phased. 7B.1 is done (below). 7B.2 (spells, save actions, shared dispatcher, AoE, Magic Missile) and
-7B.3 (Multiattack variants, Hydra, recharge, NPC policy) follow.
+Phased. 7B.1, 7B.2 and 7B.3 are done (below).
 
 ### 7B.1: done (dying and death saves)
 
@@ -47,6 +46,27 @@ the declared action. Dead keeps the encounter state and ends all play (not `endE
 holding against a dying hero is an Iron Scribe policy, not SRD. Item 1 below is covered; item 6's
 orchestrator test lives in `apps/cli/src/dying.test.ts` (a scripted RNG, real D&D rules). Eval:
 `loop-hero-down-dying` replaces `loop-hero-down-suspends`; `e2e-hero-falls` now expects death saves.
+
+### 7B.3: done (Multiattack variants, Hydra, recharge, NPC policy)
+
+Pure `expandMultiattackVariants` (options, "Number of Heads", usage-aware), one menu entry per variant,
+multi-target Multiattack with no spillover, full Hydra Multiple Heads (`hydra.ts`, no Reactive Heads),
+a `recharge` procedure at the start of an NPC's turn, and `chooseNpcAction` (`npc-policy.ts`:
+lowest-HP target, expected-damage scoring, area targets, split Multiattack, hold against a dying hero).
+Items 2, 3 and 5 below are covered. Left out: monster Spellcasting and per-day spells.
+
+### 7B.2: done (spells, save actions, several targets)
+
+Several targets end to end: `ActionRequest.targetAliases`, `MenuAction.maxTargets`, a flat decision schema
+with `secondaryTargetAlias` and `tertiaryTargetAlias`, `/act A# T# T# T#`. One dispatcher
+(`resolve-action.ts`) for weapon and monster attacks, Multiattack, monster save actions and character
+spells. Character spellcasting fields, `validateCharacterSpells`, `spellSlotsUsed` as events, a Level 1
+Sorcerer preset (`--archetype sorcerer`), `ray-of-frost` override. Save effects roll damage once and
+each target saves; Magic Missile darts follow the chosen targets with no spillover; healing wakes a
+creature at 0 HP. Monster limited actions are tracked in `entity.system.usage`. Not done (deferred on
+purpose): upcasting, Innate Sorcery and other class features, monster Spellcasting, conditions added by a
+failed save (Grappled and the like), and recharge rolls (7B.3). Items 4 below is covered for characters and
+for monster save actions; monster spells remain.
 
 Items still open:
 

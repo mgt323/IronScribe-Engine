@@ -3,9 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 import { loadCatalog } from '../catalog/catalog.js';
 import { monsterToEntity } from '../catalog/spawn.js';
-import { Character, characterToEntity, readCharacter } from './character.js';
+import {
+  Character,
+  characterToEntity,
+  readCharacter,
+  validateCharacterSpells,
+} from './character.js';
 import { readCreature } from './creature.js';
-import { sampleCharacter } from './testing/sample.js';
+import { clericSheet, sampleCharacter, sorcererSheet } from './testing/sample.js';
 
 const catalog = loadCatalog();
 
@@ -119,5 +124,42 @@ describe('creature view', () => {
   it('rejects an entity that is neither a character nor a monster', () => {
     const entity = characterToEntity(sampleCharacter(), 'hero');
     expect(() => readCreature({ ...entity, system: {} }, catalog)).toThrow(/character or monster/);
+  });
+});
+
+describe('spellcasting fields', () => {
+  it('default to a character who casts nothing, so older sheets still parse', () => {
+    const sheet = sampleCharacter();
+    expect(sheet).toMatchObject({
+      spellcastingAbility: null,
+      cantrips: [],
+      preparedSpells: [],
+      spellSlots: {},
+    });
+    expect(() => validateCharacterSpells(sheet, catalog)).not.toThrow();
+  });
+
+  it('round-trip through the entity as plain JSON', () => {
+    const entity = characterToEntity(sorcererSheet(), 'hero');
+    const copy = JSON.parse(JSON.stringify(entity)) as Entity;
+    expect(readCharacter(copy)).toEqual(sorcererSheet());
+  });
+
+  it('are validated against the catalog and an optional allowlist', () => {
+    expect(() => validateCharacterSpells(sorcererSheet(), catalog)).not.toThrow();
+    expect(() => validateCharacterSpells(clericSheet(), catalog)).not.toThrow();
+    expect(() =>
+      validateCharacterSpells(sorcererSheet({ preparedSpells: ['nope'] }), catalog),
+    ).toThrow('unknown spell: nope');
+    expect(() => validateCharacterSpells(clericSheet(), catalog, new Set(['fire-bolt']))).toThrow(
+      'spell not allowed: sacred-flame',
+    );
+  });
+
+  it('need a spellcasting ability when spells are listed, and reject negative slots', () => {
+    expect(() =>
+      validateCharacterSpells(sorcererSheet({ spellcastingAbility: null }), catalog),
+    ).toThrow('spellcastingAbility');
+    expect(() => Character.parse({ ...sorcererSheet(), spellSlots: { '1': -1 } })).toThrow();
   });
 });

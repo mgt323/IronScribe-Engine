@@ -23,6 +23,14 @@ const present = (scene) =>
     .split('\n')
     .map((l) => l.toLowerCase()) ?? [];
 
+const NONE = {
+  kind: 'none',
+  actionAlias: null,
+  targetAlias: null,
+  secondaryTargetAlias: null,
+  tertiaryTargetAlias: null,
+};
+
 function intent(scene) {
   const line = scene.split('Player: ').at(-1).toLowerCase();
   const here = present(scene).join(' ');
@@ -57,7 +65,7 @@ function decision(scene) {
     .split('\n')
     .filter((l) => /^T\d/.test(l));
   const line = scene.split('Player: ').at(-1).toLowerCase();
-  if (!actions.length) return { kind: 'none', actionAlias: null, targetAlias: null };
+  if (!actions.length) return NONE;
   const bow = /bow|shoot|arrow/.test(line);
   const action = actions.find((a) => (bow ? /shortbow/i : /dagger/i).test(a)) ?? actions[0];
   const word = WORDS.find(([w]) => new RegExp(`\\b${w}s?\\b`).test(line))?.[1].split(' ')[0];
@@ -69,7 +77,13 @@ function decision(scene) {
     !word && nth < 0 && last ? targets.find((t) => t.startsWith(`${last} `)) : undefined;
   const target = (fallback ?? pool[0] ?? targets[0])?.split(' ')[0] ?? null;
   const needs = !/\bno target\b/.test(action);
-  return { kind: 'action', actionAlias: action.split(' ')[0], targetAlias: needs ? target : null };
+  return {
+    kind: 'action',
+    actionAlias: action.split(' ')[0],
+    targetAlias: needs ? target : null,
+    secondaryTargetAlias: null,
+    tertiaryTargetAlias: null,
+  };
 }
 
 export function createOracleClient() {

@@ -10,7 +10,12 @@ import type { LlmClient, StructuredPrompt } from '@iron-scribe/llm';
 
 import { runPlayerTurn } from './combat.js';
 import { buildDecisionPrompt, buildIntentPrompt } from './prompts.js';
-import { buildDecisionSchema, buildIntentSchema, type TurnIntent } from './schemas.js';
+import {
+  buildDecisionSchema,
+  buildIntentSchema,
+  targetAliasesOf,
+  type TurnIntent,
+} from './schemas.js';
 import type { TurnClarification } from './types.js';
 
 export interface StepContext {
@@ -154,9 +159,15 @@ export async function actionFrom(
   raw.push(...result.attempts.map((attempt) => attempt.rawText));
   if (result.data.kind === 'none' || result.data.actionAlias === null) return [];
   const { actionAlias, targetAlias } = result.data;
+  const targetAliases = targetAliasesOf(result.data);
   const aimed = menu.targets.find((target) => target.alias === targetAlias);
   return runPlayerTurn(ctx.engine, ctx.system, ctx.actorId, targetAlias !== null, () => {
-    const commit = ctx.engine.perform({ actorId: ctx.actorId, actionAlias, targetAlias });
+    const commit = ctx.engine.perform({
+      actorId: ctx.actorId,
+      actionAlias,
+      targetAlias,
+      ...(targetAliases.length > 1 ? { targetAliases } : {}),
+    });
     if (aimed) ctx.memory.lastTargetId = aimed.entityId;
     return [...commit.facts];
   });

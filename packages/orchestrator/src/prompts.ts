@@ -50,7 +50,11 @@ export function buildDecisionPrompt(
     menu.actions.length === 0
       ? '(none)'
       : menu.actions
-          .map((action) => `${action.alias} ${action.actionId} — ${action.label}`)
+          .map((action) => {
+            const many = action.maxTargets ?? 1;
+            const note = many > 1 ? ` (up to ${String(many)} targets)` : '';
+            return `${action.alias} ${action.actionId} — ${action.label}${note}`;
+          })
           .join('\n');
   const targets =
     menu.targets.length === 0
@@ -66,6 +70,7 @@ export function buildDecisionPrompt(
       targets,
       '',
       'Choose one legal alias. Use kind "none" and null aliases when nothing legal matches. Do not invent a target.',
+      'Fill secondaryTargetAlias and tertiaryTargetAlias only when the player names several targets, for an action that takes several (an area effect or Magic Missile). Otherwise leave them null. Never repeat a target.',
       'An action that needs a target must name one (targetAlias is never null for it). If the player names no target or says "again", use ' +
         (lastTarget
           ? `${lastTarget.alias} (${lastTarget.label}), the last target`
@@ -124,6 +129,15 @@ function outcomeLines(facts: readonly Fact[]): string[] {
         /\bmiss\b/i.test(fact.text)
           ? `Outcome: ${who}'s attack MISSES. Do not describe a hit or a wound from it.`
           : `Outcome: ${who}'s attack HITS. The blow lands.`,
+      );
+      continue;
+    }
+    if (fact.key === 'save') {
+      const who = fact.text.split(' ')[0] ?? 'The creature';
+      out.push(
+        /\bsuccess\b/i.test(fact.text)
+          ? `Outcome: ${who} makes the saving throw and avoids most of the effect.`
+          : `Outcome: ${who} fails the saving throw and takes the effect in full.`,
       );
       continue;
     }

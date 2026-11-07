@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A, 7B.1 done; rest open) | In progress |
+| 7     | Encounters (7A, 7B done; 7C open)     | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -225,3 +225,40 @@ Scope record: `docs/stage-7-encounters.md`.
   `/status` shows `Status: DYING (...)` or `Status: DEAD`
 - Tests: `death-saves.test.ts`, `combat.test.ts` (system), `apps/cli/src/dying.test.ts`
   (scripted RNG, undo/redo). Oracle eval 100%, 0 invariant violations. Live model eval not rerun
+
+## Stage 7B.2 notes (spells, save actions, several targets)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- engine-core: `ActionRequest.targetAliases`, `MenuAction.maxTargets`, `ResolvedRequest.targets`
+  (`target` is the first). The model schema stays flat: `targetAlias`, `secondaryTargetAlias`,
+  `tertiaryTargetAlias`, all required
+- D&D: one dispatcher `resolve-action.ts`; `spells.ts`, `spell-data.ts`, `resolve-save.ts`,
+  `deal-damage.ts`, `usage.ts`. `Character` gained `spellcastingAbility`, `cantrips`, `preparedSpells`,
+  `spellSlots`; spent slots are `entity.system.spellSlotsUsed`, limited monster actions are
+  `entity.system.usage`. Save effects roll damage once; Magic Missile darts have no spillover;
+  `onSuccess: 'other'` save actions are not offered. No upcasting
+- CLI: `--archetype rogue|sorcerer`, `defaultSorcererSheet`, `/act A# [T#] [T#] [T#]`, `/sheet` shows
+  spells and slots
+- Eval harness: oracle returns the new decision fields; audit accepts spell and save-action damage
+- Tests: `spells.test.ts`, `save-actions.test.ts`, `menu-multi.test.ts`, `schemas.test.ts`,
+  `prompts.test.ts`, `apps/cli/src/sorcerer.test.ts`. Oracle eval 100%. No live-model eval for spells yet
+
+## Stage 7B.3 notes (Multiattack variants, Hydra, recharge, NPC policy)
+
+Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024/AGENTS.md`.
+
+- `expandMultiattackVariants` returns every complete variant; the menu has one labelled entry each
+  (`monster:multiattack`, `monster:multiattack:<n>`). Multi-target Multiattack follows
+  `targetAliases`, no spillover
+- Hydra Multiple Heads is complete except Reactive Heads (reactions). SRD text says it regains a flat
+  20 HP when it grows heads; that is implemented (not 10 per head)
+- Recharge is rolled at the start of the NPC's turn by a `recharge` procedure; per-day counts and
+  per-rest expenditure live in `entity.system.usage`
+- NPC policy (Iron Scribe, not SRD): `chooseNpcAction`. Hostiles may now attack friendly NPCs, so the
+  7A eval cases that said a friendly guard is never hurt were relaxed, and the audit accepts NPC-on-NPC hits
+- Orchestrator fix: facts of the turn-end procedure are no longer dropped (the Hydra regrowth fact)
+- Not done: monster Spellcasting and per-day spells (a Multiattack choice naming a spell is dropped),
+  conditions from failed saves, Reactive Heads, live-model eval of the new paths (oracle eval is 100%)
+- Tests: `multiattack.test.ts`, `hydra.test.ts`, `npc-policy.test.ts` (recharge, policy),
+  `apps/cli/src/stage7b3.test.ts` (one undo and redo over recharge and Hydra turns)

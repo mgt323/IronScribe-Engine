@@ -1,3 +1,5 @@
+import type { Ability } from '../catalog/schema.js';
+
 /** SRD 5.2.1, "Ability Scores": (score − 10) / 2, rounded down. */
 export function abilityModifier(score: number): number {
   return Math.floor((score - 10) / 2);
@@ -12,3 +14,12 @@ export function proficiencyBonus(level: number): number {
   }
   return 2 + Math.floor((level - 1) / 4);
 }
+
+export const ABILITY_LABEL: Record<Ability, string> = {
+  str: 'Strength',
+  dex: 'Dexterity',
+  con: 'Constitution',
+  int: 'Intelligence',
+  wis: 'Wisdom',
+  cha: 'Charisma',
+};

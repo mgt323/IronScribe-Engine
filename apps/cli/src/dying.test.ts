@@ -35,7 +35,13 @@ const intent = JSON.stringify({
   checkSkill: null,
   wantsAction: true,
 });
-const decision = JSON.stringify({ kind: 'action', actionAlias: 'A1', targetAlias: 'T1' });
+const decision = JSON.stringify({
+  kind: 'action',
+  actionAlias: 'A1',
+  targetAlias: 'T1',
+  secondaryTargetAlias: null,
+  tertiaryTargetAlias: null,
+});
 
 /**
  * A real D&D system whose dice come from one scripted RNG (die faces, in order),

@@ -67,7 +67,7 @@ export const E2E_CASES = [
     tier: 'full',
     heroHp: 60,
     about:
-      'Friendly guard, neutral cultist, two hostile goblins. Only the goblins fight and are fought.',
+      'Friendly guard, neutral cultist, two hostile goblins. Only the goblins fight and are fought; goblins may hurt the friendly guard, never the neutral cultist.',
     steps: async (ctx) => {
       await ctx.send('A friendly guard waves at me from the gate.');
       await ctx.send('A cultist sits by the road, paying me no attention.');
@@ -82,7 +82,12 @@ export const E2E_CASES = [
           `goblins: ${ofKind(ctx, 'goblin-warrior').length}`,
         ],
         [bystanders.length === 2, `bystanders: ${bystanders.length}`],
-        [bystanders.every((b) => b.hp.current === b.hp.max), 'a bystander was hurt'],
+        [
+          bystanders
+            .filter((b) => attitude(b) === 'neutral')
+            .every((b) => b.hp.current === b.hp.max),
+          'a neutral bystander was hurt',
+        ],
         [legalEnd(ctx, ctx.notes.result.end), 'illegal end'],
       );
     },

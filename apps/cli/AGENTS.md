@@ -4,12 +4,13 @@
 
 Single-player theater-of-the-mind REPL. Free text and slash commands go through
 `@iron-scribe/orchestrator`, which is the only caller of the engine. The
-player is one Level 1 Rogue (`defaultAdventurerSheet`). The model may suggest
+player is one Level 1 Rogue (`defaultAdventurerSheet`, default) or Sorcerer
+(`defaultSorcererSheet`, `--archetype sorcerer`). The model may suggest
 a name and a backstory. It does not draft scores, hit points, or gear.
 
 ## Public interface
 
-- `createCliSession({ seed, character, characterName, backstory?, llm, catalog })`
+- `createCliSession({ seed, character, characterName, backstory?, archetype?, llm, catalog })`
   spawns the hero before the orchestrator exists, so `/undo` cannot remove them
 - `handleCliLine(session, line, writer)` — `/status`, `/sheet`, `/act`, `/spawn`,
   `/init`, `/undo`, `/redo`, `/log`, `/save`, `/help`, `/quit`. Read-only
@@ -44,6 +45,16 @@ a name and a backstory. It does not draft scores, hit points, or gear.
   gives a ceiling. Dice-dependent cases skip (not fail) when the situation did not occur. `--summary`
   plus `--compare` diff two models. Files: `eval/cases/*` (cases), `eval/lib/*` (driver, audit,
   policy, soft probes, report).
+
+## Archetypes and spells (7B.2)
+
+`src/archetypes.ts`: `ARCHETYPES`, `defaultSheet(archetype)`, `SORCERER_ALLOWLIST` (fire-bolt,
+ray-of-frost, mage-hand, prestidigitation, burning-hands, magic-missile; no Sacred Flame or Cure
+Wounds, which are tested with a test-only Cleric fixture in the system package). The Sorcerer is the
+SRD Level 1 sheet: 8 HP, AC 12, CHA 16, dagger and light crossbow, two level 1 slots; Innate Sorcery is
+deferred. `createCliSession` validates every spell id against the catalog. `/sheet` shows spell attack,
+save DC, cantrips, prepared spells, and slots left. `/act A# [T#] [T#] [T#]` names up to three
+targets (area spells, Magic Missile); `/undo` restores spent slots with the rest of the turn.
 
 ## Combat
 

@@ -23,6 +23,8 @@ export interface EncounterState {
   /** Actors that have finished their turn in this round. */
   readonly acted: readonly string[];
   readonly order: readonly EncounterOrderEntry[];
+  /** NPCs that already rolled recharge this turn. Absent when none; `advanceTurn` clears it. */
+  readonly recharged?: readonly string[];
 }
 
 interface Member {

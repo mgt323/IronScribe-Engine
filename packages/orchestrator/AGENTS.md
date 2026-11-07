@@ -43,6 +43,13 @@ state except by calling the engine.
   ends and NPCs act to the hero's next turn. Back up (natural 20, solo rest) or dead: no `turnEnd`,
   so a revived hero keeps the turn. `isActorDefeated`: the turn is `none`, no model call. A hero
   downed by a faster NPC skips the declared action
+- Several targets (7B.2): `DecisionSchema` stays flat: `targetAlias`, `secondaryTargetAlias`,
+  `tertiaryTargetAlias` (all required, nullable enums). Refinements: tertiary needs secondary,
+  no repeats, no more than the action's `maxTargets`, none for a no-target action. `steps.ts`
+  sends `targetAliases` to `perform` when more than one is named (`targetAliasesOf`). The decision
+  prompt marks actions that take several targets. Narration prompt turns `save` facts into plain
+  `Outcome:` lines. NPC facts: only `attack` becomes `npc_attack`; spells and save actions add a
+  `use` fact (`<id> uses Acid Breath`)
 - Logs hold prompts, raw replies, facts, narration, and the RNG. No API key
 
 ## Test rules

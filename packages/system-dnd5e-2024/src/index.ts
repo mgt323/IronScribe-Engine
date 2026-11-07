@@ -13,7 +13,14 @@ export {
   type AttackResult,
   type WeaponAttack,
 } from './rules/attack.js';
-export { Character, characterToEntity, readCharacter } from './rules/character.js';
+export {
+  Character,
+  characterToEntity,
+  readCharacter,
+  validateCharacterSpells,
+  type CharacterInput,
+} from './rules/character.js';
+export { castingMod, readSlotsUsed, spellAttackBonus, spellSaveDc } from './rules/spell-data.js';
 export { abilityCheck, savingThrow, skillCheck, type CheckResult } from './rules/checks.js';
 export { PROJECT_DEFAULT_CHECK_DC, SRD_TYPICAL_DC, resolveDndCheckDc } from './rules/check-dc.js';
 export {
@@ -43,7 +50,10 @@ export {
   readDeathSaves,
 } from './rules/death-saves.js';
 export { DEATH_SAVE_DC } from './rules/death-save-roll.js';
-export { expandMultiattack } from './rules/multiattack.js';
+export { expandMultiattack, expandMultiattackVariants } from './rules/multiattack.js';
+export { HydraState, readHydraState } from './rules/hydra.js';
+export { chooseNpcAction } from './rules/npc-policy.js';
+export { readUsage, runRecharge } from './rules/usage.js';
 export {
   rollInitiative,
   type EncounterOrderEntry,

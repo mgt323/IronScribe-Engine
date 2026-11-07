@@ -18,6 +18,9 @@ export interface ActionDecision {
   readonly kind: 'action' | 'none';
   readonly actionAlias: string | null;
   readonly targetAlias: string | null;
+  /** Flat on purpose (no arrays in model schemas): a second and third target for area actions. */
+  readonly secondaryTargetAlias: string | null;
+  readonly tertiaryTargetAlias: string | null;
 }
 
 /** An empty list is `null`, never `z.enum([])`. */
@@ -61,15 +64,19 @@ export function buildIntentSchema(
 
 /** Legal aliases after spawn and checks. Built from the menu that exists now. */
 export function buildDecisionSchema(menu: ActionMenu): z.ZodType<ActionDecision> {
+  const targets = nullableEnum(menu.targets.map((target) => target.alias));
   return z
     .strictObject({
       kind: z.enum(['action', 'none']),
       actionAlias: nullableEnum(menu.actions.map((action) => action.alias)),
-      targetAlias: nullableEnum(menu.targets.map((target) => target.alias)),
+      targetAlias: targets,
+      secondaryTargetAlias: targets,
+      tertiaryTargetAlias: targets,
     })
     .superRefine((value, ctx) => {
+      const aliases = targetAliasesOf(value);
       if (value.kind === 'none') {
-        if (value.actionAlias !== null || value.targetAlias !== null) {
+        if (value.actionAlias !== null || aliases.length > 0) {
           issue(ctx, 'none requires null aliases');
         }
         return;
@@ -82,8 +89,26 @@ export function buildDecisionSchema(menu: ActionMenu): z.ZodType<ActionDecision>
       if (action.needsTarget && value.targetAlias === null) {
         issue(ctx, 'this action needs a target');
       }
-      if (!action.needsTarget && value.targetAlias !== null) {
+      if (!action.needsTarget && aliases.length > 0) {
         issue(ctx, 'this action takes no target');
       }
+      if (value.secondaryTargetAlias === null && value.tertiaryTargetAlias !== null) {
+        issue(ctx, 'tertiaryTargetAlias needs secondaryTargetAlias');
+      }
+      if (new Set(aliases).size !== aliases.length) {
+        issue(ctx, 'each target may be named once');
+      }
+      if (action.needsTarget && aliases.length > (action.maxTargets ?? 1)) {
+        issue(ctx, `this action takes at most ${String(action.maxTargets ?? 1)} target(s)`);
+      }
     });
+}
+
+/** The named targets in order, as the engine takes them. */
+export function targetAliasesOf(
+  decision: Pick<ActionDecision, 'targetAlias' | 'secondaryTargetAlias' | 'tertiaryTargetAlias'>,
+): string[] {
+  return [decision.targetAlias, decision.secondaryTargetAlias, decision.tertiaryTargetAlias].filter(
+    (alias): alias is string => alias !== null,
+  );
 }

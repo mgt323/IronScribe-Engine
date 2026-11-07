@@ -242,7 +242,13 @@ export function createOrchestrator(options: {
     runTurn: (input, run) => runMechanics(input, run),
     runAction: (request, run) =>
       runDirect(
-        `act ${request.actionAlias} ${request.targetAlias ?? ''}`.trim(),
+        [
+          'act',
+          request.actionAlias,
+          ...(request.targetAliases?.length ? request.targetAliases : [request.targetAlias ?? '']),
+        ]
+          .join(' ')
+          .trim(),
         () => {
           const started = engine.commits.length;
           const dying = system.playerTurnProcedure?.(engine.state, actorId) ?? null;

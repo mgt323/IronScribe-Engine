@@ -139,7 +139,7 @@ export const ENGINE_CASES = [
     tier: 'engine',
     heroHp: 80,
     about:
-      'A friendly NPC in a fight takes no hostile action, is never hurt, and does not end combat.',
+      'A friendly NPC in a fight takes no hostile action and does not end combat. Hostiles may target it (7B.3 policy), so it may be hurt, only by them.',
     steps: async (ctx) => {
       await spawn(ctx, 'guard 1 friendly');
       await spawn(ctx, 'wolf');
@@ -151,9 +151,8 @@ export const ENGINE_CASES = [
       return rules(
         [!!guard, 'guard missing'],
         [attitude(guard) === 'friendly', 'guard attitude changed'],
-        [guard.hp.current === guard.hp.max, 'guard was hurt'],
         [
-          !allFacts(ctx).some((f) => f.key === 'npc_attack' && /guard/i.test(f.text)),
+          !allFacts(ctx).some((f) => f.key === 'npc_attack' && /^guard\b/i.test(f.text)),
           'guard attacked',
         ],
       );
