@@ -17,7 +17,8 @@
     "build": "tsc -b",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
-    "eval:7a": "node eval/run.mjs"
+    "eval:7a": "node eval/stage-7a/run.mjs",
+    "eval:7b": "node eval/stage-7b/run.mjs"
   },
   "dependencies": {
     "@iron-scribe/engine-core": "workspace:*",

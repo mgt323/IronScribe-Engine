@@ -262,3 +262,20 @@ Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024
   conditions from failed saves, Reactive Heads, live-model eval of the new paths (oracle eval is 100%)
 - Tests: `multiattack.test.ts`, `hydra.test.ts`, `npc-policy.test.ts` (recharge, policy),
   `apps/cli/src/stage7b3.test.ts` (one undo and redo over recharge and Hydra turns)
+
+## Stage 7B eval (live)
+
+- The 7A eval moved to `apps/cli/eval/stage-7a/` (`eval:7a`). The 7B eval is `apps/cli/eval/stage-7b/`
+  (`eval:7b`): 22 cases in `dying`, `spell`, `npc`, `e2e`; flags in `--help`. Details in `apps/cli/AGENTS.md`
+- Oracle run: 100% over several seeds, 0 invariant violations. Live run after the alias fix (`eval-stage7b.json`,
+  KoboldCpp, gemma-4-26B-A4B, 3 runs, 61 counted, 2 skipped): pass 100% in every category, 0 invariant violations,
+  0 schema failures, no flaky cases. Model behavior: spell 100% (24/24), several targets 100% (6/6), target 87.5% (7/8),
+  "declines illegal" 75% (9/12: a cantrip substituted for a spell with no slot). Narration probes (soft): `outcome` 64%,
+  `hurt` 90%, `grounding` 95%, `dyingTruth` 97%, `noMechanics` 100%, `spellShown` 100% (outcome, hurt and grounding are
+  7C items). Latency p50 1.7 s, p95 3.0 s, 1.9 calls and 919 tokens per turn
+- Fixed (found by the eval, `npc-alias-survives-friend-falling`): the hero's `T#` was chosen before NPCs ahead of the hero
+  acted, so a fallen friendly NPC renumbered the targets. `rebindRequest` (orchestrator `combat.ts`) re-aims the request
+  at the same creatures and action under the current menu; a target that is gone drops out, and with none left the
+  hero's action is skipped (like a hero downed first). Used by free text and `/act`
+- Known gap (`e2e-spawn-young-red-dragon`): the model drops "young" from "young red dragon", so the GM asks which dragon
+  and the answer is read the same way (7C spawn work)

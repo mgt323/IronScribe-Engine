@@ -1,5 +1,7 @@
 import {
   EngineError,
+  type ActionMenu,
+  type ActionRequest,
   type Engine,
   type EntityId,
   type Fact,
@@ -71,6 +73,46 @@ export function runDyingTurn(
   if (end) facts.push(...engine.runProcedure('combat', end).facts);
   facts.push(...advanceCombatUntilPlayer(engine, system, actorId));
   return facts;
+}
+
+/**
+ * The request was written against the menu the player saw. NPCs ahead of the actor may act
+ * first and change who is a legal target (a creature falls), which renumbers the T# aliases.
+ * Re-aim the request at the same creatures and action under the current menu. A target that
+ * is gone is dropped; with none left (or the action gone) the action is skipped: null.
+ * Aliases the old menu did not list are left alone, so the engine still rejects them.
+ */
+export function rebindRequest(
+  engine: Engine,
+  request: ActionRequest,
+  before: ActionMenu,
+): ActionRequest | null {
+  const now = engine.menu(request.actorId);
+  const oldAction = before.actions.find((a) => a.alias === request.actionAlias);
+  const action = oldAction ? now.actions.find((a) => a.actionId === oldAction.actionId) : undefined;
+  if (oldAction && !action) return null;
+  const wanted = request.targetAliases?.length
+    ? request.targetAliases
+    : request.targetAlias === null
+      ? []
+      : [request.targetAlias];
+  const aliases: string[] = [];
+  for (const alias of wanted) {
+    const old = before.targets.find((t) => t.alias === alias);
+    if (!old) {
+      aliases.push(alias);
+      continue;
+    }
+    const target = now.targets.find((t) => t.entityId === old.entityId);
+    if (target) aliases.push(target.alias);
+  }
+  if (wanted.length > 0 && aliases.length === 0) return null;
+  return {
+    actorId: request.actorId,
+    actionAlias: action?.alias ?? request.actionAlias,
+    targetAlias: aliases[0] ?? null,
+    ...(aliases.length > 1 ? { targetAliases: aliases } : {}),
+  };
 }
 
 /** Rolls the system's opening procedure (initiative) before the first targeted action. */

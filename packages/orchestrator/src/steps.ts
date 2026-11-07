@@ -8,7 +8,7 @@ import {
 } from '@iron-scribe/engine-core';
 import type { LlmClient, StructuredPrompt } from '@iron-scribe/llm';
 
-import { runPlayerTurn } from './combat.js';
+import { rebindRequest, runPlayerTurn } from './combat.js';
 import { buildDecisionPrompt, buildIntentPrompt } from './prompts.js';
 import {
   buildDecisionSchema,
@@ -162,12 +162,18 @@ export async function actionFrom(
   const targetAliases = targetAliasesOf(result.data);
   const aimed = menu.targets.find((target) => target.alias === targetAlias);
   return runPlayerTurn(ctx.engine, ctx.system, ctx.actorId, targetAlias !== null, () => {
-    const commit = ctx.engine.perform({
-      actorId: ctx.actorId,
-      actionAlias,
-      targetAlias,
-      ...(targetAliases.length > 1 ? { targetAliases } : {}),
-    });
+    const request = rebindRequest(
+      ctx.engine,
+      {
+        actorId: ctx.actorId,
+        actionAlias,
+        targetAlias,
+        ...(targetAliases.length > 1 ? { targetAliases } : {}),
+      },
+      menu,
+    );
+    if (request === null) return [];
+    const commit = ctx.engine.perform(request);
     if (aimed) ctx.memory.lastTargetId = aimed.entityId;
     return [...commit.facts];
   });

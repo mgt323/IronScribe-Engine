@@ -19,7 +19,7 @@ import {
 } from './helpers.js';
 import { narrateFacts } from './narrate.js';
 import { buildNarrationPrompt } from './prompts.js';
-import { advanceCombatUntilPlayer, runDyingTurn, runPlayerTurn } from './combat.js';
+import { advanceCombatUntilPlayer, rebindRequest, runDyingTurn, runPlayerTurn } from './combat.js';
 import { actionFrom, checkFrom, readIntent, spawnFrom } from './steps.js';
 import type { TurnIntent } from './schemas.js';
 import type {
@@ -251,12 +251,14 @@ export function createOrchestrator(options: {
           .trim(),
         () => {
           const started = engine.commits.length;
+          const menuBefore = engine.menu(actorId);
           const dying = system.playerTurnProcedure?.(engine.state, actorId) ?? null;
           const facts = dying
             ? runDyingTurn(engine, system, actorId, dying)
-            : runPlayerTurn(engine, system, actorId, request.targetAlias !== null, () => [
-                ...engine.perform(request).facts,
-              ]);
+            : runPlayerTurn(engine, system, actorId, request.targetAlias !== null, () => {
+                const bound = rebindRequest(engine, request, menuBefore);
+                return bound === null ? [] : [...engine.perform(bound).facts];
+              });
           return { commits: engine.commits.slice(started), facts, clarification: null };
         },
         run,

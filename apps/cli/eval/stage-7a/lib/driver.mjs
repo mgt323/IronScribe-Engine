@@ -3,7 +3,7 @@
  * "setup" helpers that pin state (HP, turn order) so dice cannot decide the scenario.
  * Setup commits are real engine commits, so they show up in `ctx.setups`, not in turns.
  */
-import { createCliSession, defaultAdventurerSheet, handleCliLine } from '../../dist/index.js';
+import { createCliSession, defaultAdventurerSheet, handleCliLine } from '../../../dist/index.js';
 
 export const HERO = 'hero';
 
