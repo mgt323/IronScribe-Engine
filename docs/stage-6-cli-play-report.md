@@ -21,12 +21,12 @@ Model: `koboldcpp/gemma-4-26B-A4B-it-qat-uncensored-heretic-UDmerge-Q4_K_XXL`,
 
 Of 52 cases, 49 pass 3/3. The other three:
 
-| Case                       | Result      | Cause                                   | Status      |
-| -------------------------- | ----------- | --------------------------------------- | ----------- |
-| `no-attack-without-target` | 0/3         | Orchestrator bug (see below)            | Fixed       |
-| `attack-picks-target`      | 2/3 (flaky) | Eval check bug: a miss has no `hp` fact | Fixed       |
-| `spawn-friendly-guard`     | 0/3         | Model behaviour                         | Open        |
-| `spawn-mixed-group`        | known gap   | One spawn query per turn                | Open, known |
+| Case                       | Result      | Cause                                   | Status         |
+| -------------------------- | ----------- | --------------------------------------- | -------------- |
+| `no-attack-without-target` | 0/3         | Orchestrator bug (see below)            | Fixed          |
+| `attack-picks-target`      | 2/3 (flaky) | Eval check bug: a miss has no `hp` fact | Fixed          |
+| `spawn-friendly-guard`     | 0/3         | Model behaviour                         | Open           |
+| `spawn-mixed-group`        | known gap   | One spawn query per turn                | Closed in 7C.2 |
 
 After the two fixes, `no-attack-without-target` and `attack-picks-target` passed 3/3
 on a rerun. The full suite was not rerun.
@@ -74,13 +74,15 @@ Options, cheapest first:
 4. Longer term: scene or encounter definitions from a GM replace player-text spawning
    (Stage 9), so NPC presence no longer depends on the model reading prose.
 
-## Open 2: `spawn-mixed-group` (KNOWN)
+## Open 2: `spawn-mixed-group` (closed in Stage 7C.2)
+
+The single spawn query below is the Stage 6 limit. Stage 7C.2 replaced it with three flat slots and a stored clarification queue. The legacy case now requires one wolf and one bandit.
 
 Input: "A wolf and a bandit come out of the trees."
 
-Cause: the intent schema holds one spawn (`spawnQuery`, `spawnCount`,
-`spawnAttitude`). A sentence with two kinds of creature cannot be expressed. This is
-a design limit, so the case is marked `known` and left out of the pass rate.
+Cause, as of Stage 6: the intent schema held one spawn (`spawnQuery`, `spawnCount`,
+`spawnAttitude`). A sentence with two kinds of creature could not be expressed. The
+case was marked `known` and left out of the pass rate. Stage 7C.2 removed that mark.
 
 Two behaviours seen on this input:
 

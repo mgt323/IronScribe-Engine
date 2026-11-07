@@ -1,7 +1,7 @@
 # Stage 7: Encounters
 
 Stage 7 is split in three. 7A and 7B are done. 7C (scene, spawns,
-narration) is split into 7C.1 (done), 7C.2 and 7C.3. All three come before the
+narration) is split into 7C.1 (done), 7C.2 (done) and 7C.3. All three come before the
 web UI (Stage 8).
 Day-to-day progress lives in `docs/status.md`; this file is the scope record.
 
@@ -88,11 +88,9 @@ Rules the engine still lacks. Nothing here needs new scene concepts.
 
 ## 7C: scene, spawns and narration
 
-Phased. 7C.1 is done. 7C.2 (mixed-group spawns: three flat slots with a total cap of 10, a stored clarification
-queue that does not re-run the intent call, strict token matching of the player's answer) and 7C.3 (proximity
-`engaged | nearby | gone`, where `engaged` means encounter participant and not melee reach; a full audit of
-`entity.present`; reinforcements that keep `turnIndex`; SRD 5.2.1 Hide at DC 15, surprise disadvantage and
-Invisible advantage on initiative) are planned.
+Phased. 7C.1 and 7C.2 are done. 7C.3 (proximity `engaged | nearby | gone`, where `engaged` means encounter
+participant and not melee reach; a full audit of `entity.present`; reinforcements that keep `turnIndex`;
+SRD 5.2.1 Hide at DC 15, surprise disadvantage and Invisible advantage on initiative) is planned.
 
 ### 7C.1: done (narration grounding)
 
@@ -151,13 +149,15 @@ own.
 
 ### Spawn and intent
 
-8. **Mixed groups** in one sentence ("a wolf and a bandit"): the known
-   `spawn-mixed-group` gap in `docs/stage-6-cli-play-report.md`. Default variants
-   (done in 7A) were the other half of that recommendation. Preferred design:
-   fixed flat slots (`spawn1…spawn3`, each with query, count, attitude), each
-   slot with its own clarification and, with item 5, its own proximity. Fall
-   back to a `moreSpawns` flag with a follow-up intent call if the model fills
-   slots badly. Measure with `--runs 3`. Asking the player to repeat is rejected.
+8. **Mixed groups** (done, 7C.2). One sentence can name up to three kinds
+   (`spawn1` … `spawn3`, each query, count, attitude). Counts are contiguous,
+   each 1..10, and total at most 10. An ambiguous slot is stored with the
+   original line, the check, `wantsAction`, and the slots already matched;
+   the reply is matched on that candidate list (exact name or id, or tokens
+   that fit exactly one candidate) and the intent model is not called again.
+   Every matched slot is committed together, then the stored check or action
+   runs. Proximity per slot waits for item 5. `e2e-spawn-young-red-dragon`
+   accepts "the young red dragon" when that variant is among the candidates.
 
 ## Later stages
 

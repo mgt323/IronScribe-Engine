@@ -39,7 +39,8 @@ actorId)` (the procedure that ends a turn taken by acting). Optional
 - `CheckDcContext` is typed (`actorId`, `ability`, `skill`, optional
   `procedureId`, optional `difficulty` band). No free-form model text
 - `SpawnRequest.attitude` is an optional string. The concrete ruleset validates
-  it. `SpawnResolution` is `matched`, `not_found`, `ambiguous`, or `combat_active` (spawn refused,
+  it. Optional `turnTotal` is the sum of every spawn count in the turn (this
+  request included); absent means this request is the whole turn. `SpawnResolution` is `matched`, `not_found`, `ambiguous`, or `combat_active` (spawn refused,
   nothing changed)
 - `Procedure` is `{ kind, ...payload }` with JSON-safe values
 - `EngineError` with a `code`

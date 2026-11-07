@@ -25,9 +25,15 @@ import {
 const intent = (value: Record<string, unknown>) => JSON.stringify(value);
 const idle = {
   spawnIsNew: true,
-  spawnQuery: null,
-  spawnCount: null,
-  spawnAttitude: null,
+  spawn1Query: null,
+  spawn1Count: null,
+  spawn1Attitude: null,
+  spawn2Query: null,
+  spawn2Count: null,
+  spawn2Attitude: null,
+  spawn3Query: null,
+  spawn3Count: null,
+  spawn3Attitude: null,
   checkAbility: null,
   checkSkill: null,
   wantsAction: false,
@@ -78,17 +84,17 @@ describe('cli play', () => {
       {
         text: intent({
           ...idle,
-          spawnQuery: 'dragon',
-          spawnCount: 1,
-          spawnAttitude: 'hostile',
+          spawn1Query: 'dragon',
+          spawn1Count: 1,
+          spawn1Attitude: 'hostile',
         }),
       },
       {
         text: intent({
           ...idle,
-          spawnQuery: 'goblin warrior',
-          spawnCount: 1,
-          spawnAttitude: 'hostile',
+          spawn1Query: 'goblin warrior',
+          spawn1Count: 1,
+          spawn1Attitude: 'hostile',
         }),
       },
       { text: 'A goblin warrior is here.' },
@@ -193,11 +199,11 @@ describe('cli play', () => {
     const catalog = loadCatalog();
     const llm = createScriptedLlmClient([
       {
-        text: intent({ ...idle, spawnQuery: 'wolf', spawnCount: 1, spawnAttitude: 'hostile' }),
+        text: intent({ ...idle, spawn1Query: 'wolf', spawn1Count: 1, spawn1Attitude: 'hostile' }),
       },
       { text: 'A wolf pads in.' },
       {
-        text: intent({ ...idle, spawnQuery: 'dragon', spawnCount: 1, spawnAttitude: 'hostile' }),
+        text: intent({ ...idle, spawn1Query: 'dragon', spawn1Count: 1, spawn1Attitude: 'hostile' }),
       },
     ]);
     const session = createCliSession({

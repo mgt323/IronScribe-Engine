@@ -76,6 +76,11 @@ export interface SpawnRequest {
   readonly query: string;
   readonly count: number;
   readonly attitude?: string;
+  /**
+   * Combined count of every spawn in this turn, including this request.
+   * Absent means this request is the whole turn. The rules reject a total above their cap.
+   */
+  readonly turnTotal?: number;
 }
 
 export interface SpawnCandidate {

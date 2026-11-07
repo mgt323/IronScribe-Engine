@@ -14,6 +14,8 @@ import type { Monster } from '../catalog/schema-monster.js';
 
 export const DndAttitude = z.enum(['hostile', 'neutral', 'friendly']);
 export const DndSpawnCount = z.number().int().min(1).max(10);
+/** Every slot in one turn, added together. */
+export const MAX_TURN_SPAWN = 10;
 export const MAX_AMBIGUOUS_CANDIDATES = 10;
 
 const IRREGULAR_PLURAL: Readonly<Record<string, string>> = {
@@ -90,6 +92,10 @@ export function resolveDndSpawn(
   catalog: Catalog,
 ): SpawnResolution {
   const count = DndSpawnCount.parse(request.count);
+  const turnTotal = request.turnTotal ?? count;
+  if (!Number.isInteger(turnTotal) || turnTotal < count || turnTotal > MAX_TURN_SPAWN) {
+    throw new EngineError('invalid_amount', 'A turn can spawn at most 10 creatures');
+  }
   const attitude = DndAttitude.parse(request.attitude ?? 'hostile');
   if (state.system['encounter'] != null) {
     return { status: 'combat_active', query: request.query };

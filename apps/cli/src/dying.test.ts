@@ -28,9 +28,15 @@ const base = createDnd5eSystem({ catalog });
 const FRESH: DeathSaveState = { successes: 0, failures: 0, stable: false, dead: false };
 const intent = JSON.stringify({
   spawnIsNew: false,
-  spawnQuery: null,
-  spawnCount: null,
-  spawnAttitude: null,
+  spawn1Query: null,
+  spawn1Count: null,
+  spawn1Attitude: null,
+  spawn2Query: null,
+  spawn2Count: null,
+  spawn2Attitude: null,
+  spawn3Query: null,
+  spawn3Count: null,
+  spawn3Attitude: null,
   checkAbility: null,
   checkSkill: null,
   wantsAction: true,

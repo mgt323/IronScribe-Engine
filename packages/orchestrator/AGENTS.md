@@ -31,6 +31,7 @@ state except by calling the engine.
   the partial text and sets `narrationError`. The mechanics stay committed
 - `buildIntentSchema` / `buildDecisionSchema` are flat. An empty alias list is
   `z.null()`, never `z.enum([])`. Intent has no aliases and no DC. `spawnIsNew` is required and comes first: when it is false the spawn fields are ignored, so "a goblin" for one already present spawns nothing
+- Mixed spawns (7C.2): three slots, `spawn1` … `spawn3`, each query, count and attitude, all required and nullable. Slots are filled in order. Each count is 1..10 and the sum is at most 10. `spawnFrom` resolves every slot, then commits them as one `spawn`. An ambiguous slot is kept on the orchestrator with the original line, the check, `wantsAction`, the creatures already matched, and the slots still open. The reply is matched against those candidates (exact id or name, or tokens that fit exactly one) and the intent model is not called. The next ambiguous slot is asked the same way. Then the stored check or action runs. A reply that fits none or several is a new turn
 - Combat loop (`combat.ts`): `runPlayerTurn` opens the encounter, runs
   `advanceCombatUntilPlayer` (NPCs ahead of the player), skips the player's action
   if they went down, then calls `turnEnd` and the loop again. `/init` also runs

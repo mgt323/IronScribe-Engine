@@ -10,7 +10,7 @@
 | 4     | D&D rules                             | Done        |
 | 5     | LLM providers + eval                  | Done        |
 | 6     | CLI play                              | Done        |
-| 7     | Encounters (7A, 7B, 7C.1 done)        | In progress |
+| 7     | Encounters (7A, 7B, 7C.1, 7C.2 done)  | In progress |
 | 8     | Web UI                                | Not started |
 | 9     | Campaign memory                       | Not started |
 | 10    | Desktop shell                         | Not started |
@@ -266,7 +266,7 @@ Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024
 ## Stage 7B eval (live)
 
 - The 7A eval moved to `apps/cli/eval/stage-7a/` (`eval:7a`). The 7B eval is `apps/cli/eval/stage-7b/`
-  (`eval:7b`): 22 cases in `dying`, `spell`, `npc`, `e2e`; flags in `--help`. Details in `apps/cli/AGENTS.md`
+  (`eval:7b`): 24 cases in `dying`, `spell`, `npc`, `e2e`; flags in `--help`. Details in `apps/cli/AGENTS.md`
 - Oracle run: 100% over several seeds, 0 invariant violations. Live run after the alias fix (`eval-stage7b.json`,
   KoboldCpp, gemma-4-26B-A4B, 3 runs, 61 counted, 2 skipped): pass 100% in every category, 0 invariant violations,
   0 schema failures, no flaky cases. Model behavior: spell 100% (24/24), several targets 100% (6/6), target 87.5% (7/8),
@@ -277,8 +277,9 @@ Scope record: `docs/stage-7-encounters.md`. Rules in `packages/system-dnd5e-2024
   acted, so a fallen friendly NPC renumbered the targets. `rebindRequest` (orchestrator `combat.ts`) re-aims the request
   at the same creatures and action under the current menu; a target that is gone drops out, and with none left the
   hero's action is skipped (like a hero downed first). Used by free text and `/act`
-- Known gap (`e2e-spawn-young-red-dragon`): the model drops "young" from "young red dragon", so the GM asks which dragon
-  and the answer is read the same way (7C spawn work)
+- `e2e-spawn-young-red-dragon` is no longer a known gap: a reply such as "the young red dragon" matches that
+  candidate by name or by tokens that fit only one of the offered dragons (7C.2). A query of plain "dragon" still
+  offers only the first 10 catalog matches, which are the adult dragons
 - Target slots are per dart or sub-attack: repeats are kept (`T1, T1, T2`). Magic Missile: one slot takes all
   darts, two give `[a, b, a]`, three are exact. Area saves still hit each creature once (deduplicated)
 
@@ -295,4 +296,13 @@ Scope record: `docs/stage-7-encounters.md`.
 - engine-core `Fact` gained optional `source` and `targetIds`, set by the combat loop on NPC-step facts only
 - Eval: `grounding` probe ignores the player's own line (memory sentences excused); new case
   `e2e-narration-ignores-unspawned-creature`. Oracle eval 100%, 0 invariant violations. Live model eval not rerun
-- Next: 7C.2 (mixed-group spawns), then 7C.3 (proximity, reinforcements, Hide and surprise)
+
+## Stage 7C.2 notes (mixed-group spawns)
+
+Scope record: `docs/stage-7-encounters.md`.
+
+- Intent has three flat slots (`spawn1` … `spawn3`, each query, count, attitude). Slots are filled in order. Each count is 1..10 and the three counts together are at most 10 (schema, orchestrator, and `resolveDndSpawn` via `turnTotal`)
+- One turn commits every matched slot together. An ambiguous slot is stored with the original line, the check, `wantsAction`, the slots already matched, and the slots still open. The reply is matched against that candidate list and the intent model is not called again. The next ambiguous slot is asked the same way, then the stored check or action runs
+- A reply matches one candidate when it equals that id or name (leading "the"/"a"/"an", punctuation and hyphens ignored), or when its tokens fit exactly one candidate. Zero or several matches are not guessed
+- Eval: `e2e-spawn-mixed-group` (a wolf and a bandit). `e2e-spawn-young-red-dragon` counts again. Oracle eval 100% on the 7A and 7B suites, 0 invariant violations. Live model eval not rerun
+- Next: 7C.3 (proximity, reinforcements, Hide and surprise)

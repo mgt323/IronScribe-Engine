@@ -24,9 +24,15 @@ const menu: ActionMenu = {
 
 const intent = {
   spawnIsNew: true,
-  spawnQuery: null,
-  spawnCount: null,
-  spawnAttitude: null,
+  spawn1Query: null,
+  spawn1Count: null,
+  spawn1Attitude: null,
+  spawn2Query: null,
+  spawn2Count: null,
+  spawn2Attitude: null,
+  spawn3Query: null,
+  spawn3Count: null,
+  spawn3Attitude: null,
   checkAbility: null,
   checkSkill: null,
   wantsAction: false,
@@ -70,16 +76,63 @@ describe('intent and decision schemas', () => {
   it('requires a complete spawn and refuses a DC or a count outside 1..10', () => {
     const schema = buildIntentSchema(catalog, true);
     expect(
-      schema.safeParse({ ...intent, spawnQuery: 'rat', spawnCount: 1, spawnAttitude: 'hostile' })
+      schema.safeParse({ ...intent, spawn1Query: 'rat', spawn1Count: 1, spawn1Attitude: 'hostile' })
         .success,
     ).toBe(true);
-    expect(schema.safeParse({ ...intent, spawnQuery: 'rat' }).success).toBe(false);
+    expect(schema.safeParse({ ...intent, spawn1Query: 'rat' }).success).toBe(false);
     expect(
-      schema.safeParse({ ...intent, spawnQuery: '   ', spawnCount: 1, spawnAttitude: 'hostile' })
+      schema.safeParse({ ...intent, spawn1Query: '   ', spawn1Count: 1, spawn1Attitude: 'hostile' })
         .success,
     ).toBe(false);
-    expect(schema.safeParse({ ...intent, spawnCount: 11 }).success).toBe(false);
-    expect(schema.safeParse({ ...intent, spawnCount: 0 }).success).toBe(false);
+    expect(schema.safeParse({ ...intent, spawn1Count: 11 }).success).toBe(false);
+    expect(schema.safeParse({ ...intent, spawn1Count: 0 }).success).toBe(false);
+    expect(
+      schema.safeParse({
+        ...intent,
+        spawn1Query: 'wolf',
+        spawn1Count: 1,
+        spawn1Attitude: 'hostile',
+        spawn2Query: 'bandit',
+        spawn2Count: 2,
+        spawn2Attitude: 'hostile',
+      }).success,
+    ).toBe(true);
+    expect(
+      schema.safeParse({
+        ...intent,
+        spawn1Query: 'wolf',
+        spawn1Count: 6,
+        spawn1Attitude: 'hostile',
+        spawn2Query: 'bandit',
+        spawn2Count: 5,
+        spawn2Attitude: 'hostile',
+      }).success,
+    ).toBe(false);
+    expect(
+      schema.safeParse({
+        ...intent,
+        spawn2Query: 'bandit',
+        spawn2Count: 1,
+        spawn2Attitude: 'hostile',
+      }).success,
+    ).toBe(false);
+    const flat = toFlatJsonSchema('turn_intent', schema).jsonSchema;
+    expect(flat['required']).toEqual([
+      'spawnIsNew',
+      'spawn1Query',
+      'spawn1Count',
+      'spawn1Attitude',
+      'spawn2Query',
+      'spawn2Count',
+      'spawn2Attitude',
+      'spawn3Query',
+      'spawn3Count',
+      'spawn3Attitude',
+      'checkAbility',
+      'checkSkill',
+      'wantsAction',
+    ]);
+    expect(JSON.stringify(flat)).not.toContain('"array"');
     expect(schema.safeParse({ ...intent, checkSkill: 'stealth' }).success).toBe(false);
     expect(
       schema.safeParse({ ...intent, checkAbility: 'dex', checkSkill: 'stealth' }).success,

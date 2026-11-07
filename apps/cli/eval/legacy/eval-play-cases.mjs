@@ -72,15 +72,12 @@ export const SPAWN_CASES = [
   {
     id: 'spawn-mixed-group',
     category: 'spawn',
-    known: 'the intent has one spawn query per turn',
     steps: ['A wolf and a bandit come out of the trees.'],
     check: (ctx) =>
       rules(
-        [others(ctx).length >= 1, 'nothing spawned'],
-        [
-          others(ctx).every((e) => ['wolf', 'bandit'].includes(e.id.replace(/_\d+$/, ''))),
-          'spawned something that was not asked for',
-        ],
+        [monsters(ctx, 'wolf').length === 1, 'expected one wolf'],
+        [monsters(ctx, 'bandit').length === 1, 'expected one bandit'],
+        [clarified(ctx).length === 0, 'unexpected clarification'],
       ),
   },
   // --- spawn: negative ---

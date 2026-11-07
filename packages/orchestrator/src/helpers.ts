@@ -10,8 +10,7 @@ import {
 } from '@iron-scribe/engine-core';
 import type { StructuredPrompt } from '@iron-scribe/llm';
 
-import type { TurnIntent } from './schemas.js';
-import { clarificationFor } from './steps.js';
+import { clarificationFor, type PendingSpawn } from './spawn-turn.js';
 import type { TurnClarification, TurnLogEntry, TurnResult, TurnStatus } from './types.js';
 
 /* Pure helpers for orchestrator.ts. */
@@ -84,6 +83,7 @@ export function spawnDirect(engine: Engine, system: RuleSystem, request: SpawnRe
   };
 }
 
+/** Lower case, hyphens and punctuation become spaces. */
 export function normal(text: string): string {
   return text
     .toLowerCase()
@@ -91,15 +91,43 @@ export function normal(text: string): string {
     .trim();
 }
 
-/** The player's reply names one of the offered candidates: resume the stored intent. */
-export function answerOf(
-  waiting: { input: string; intent: TurnIntent; candidates: readonly SpawnCandidate[] },
+function withoutArticles(text: string): string {
+  return text.replace(/^(?:(?:the|a|an)\s+)+/, '');
+}
+
+/**
+ * The reply names one offered candidate, or its tokens fit exactly one of them.
+ * Zero matches and several matches are left unanswered.
+ */
+export function matchCandidate(
+  candidates: readonly SpawnCandidate[],
   reply: string,
-): { input: string; intent: TurnIntent } | null {
-  const said = normal(reply);
-  const match = waiting.candidates.find(
-    (candidate) => normal(candidate.id) === said || normal(candidate.name) === said,
+): SpawnCandidate | null {
+  const said = withoutArticles(normal(reply));
+  if (said === '') return null;
+  const exact = candidates.filter(
+    (candidate) =>
+      normal(candidate.id) === said || withoutArticles(normal(candidate.name)) === said,
   );
-  if (!match) return null;
-  return { input: waiting.input, intent: { ...waiting.intent, spawnQuery: match.id } };
+  if (exact.length === 1) return exact[0] ?? null;
+  if (exact.length > 1) return null;
+  const tokens = said.split(' ').filter((token) => token.length > 0);
+  const hits = candidates.filter((candidate) => {
+    const bag = new Set(
+      [
+        ...withoutArticles(normal(candidate.name)).split(' '),
+        ...normal(candidate.id).split(' '),
+      ].filter((token) => token.length > 0),
+    );
+    return tokens.every((token) => bag.has(token));
+  });
+  return hits.length === 1 ? (hits[0] ?? null) : null;
+}
+
+/** The player's reply names the slot we asked about. The rest of the turn stays stored. */
+export function answerOf(waiting: PendingSpawn, reply: string): PendingSpawn | null {
+  const match = matchCandidate(waiting.candidates, reply);
+  const [current, ...rest] = waiting.open;
+  if (!match || !current) return null;
+  return { ...waiting, open: [{ ...current, query: match.id }, ...rest] };
 }

@@ -4,7 +4,6 @@ import {
   type EngineSnapshot,
   type EntityId,
   type RuleSystem,
-  type SpawnCandidate,
 } from '@iron-scribe/engine-core';
 import type { LlmClient, StructuredPrompt } from '@iron-scribe/llm';
 
@@ -20,8 +19,8 @@ import {
 import { narrateFacts } from './narrate.js';
 import { buildNarrationPrompt } from './prompts.js';
 import { advanceCombatUntilPlayer, rebindRequest, runDyingTurn, runPlayerTurn } from './combat.js';
-import { actionFrom, checkFrom, readIntent, spawnFrom } from './steps.js';
-import type { TurnIntent } from './schemas.js';
+import { spawnFrom, type PendingSpawn } from './spawn-turn.js';
+import { actionFrom, checkFrom, readIntent } from './steps.js';
 import type {
   Orchestrator,
   RunTurnOptions,
@@ -47,9 +46,8 @@ export function createOrchestrator(options: {
   let logs: TurnLogEntry[] = [];
   let undoStack: HistoryEntry[] = [];
   let redoStack: HistoryEntry[] = [];
-  /** An ambiguous spawn waits here so the answer keeps count, attitude, and the rest. */
-  let pending: { input: string; intent: TurnIntent; candidates: readonly SpawnCandidate[] } | null =
-    null;
+  /** An ambiguous slot waits here so the answer keeps the rest of the turn. */
+  let pending: PendingSpawn | null = null;
 
   const record = (
     draft: Draft,
@@ -156,11 +154,11 @@ export function createOrchestrator(options: {
       const intent =
         answered?.intent ?? (await readIntent(ctx, input, run?.signal, prompts, rawResponses));
       if (answered) input = answered.input;
-      const spawned = spawnFrom(ctx, intent);
+      const spawned = spawnFrom(ctx, intent, answered);
       if (spawned.clarification) {
         engine.restore(snapBefore);
-        if (spawned.clarification.reason === 'ambiguous_spawn') {
-          pending = { input, intent, candidates: spawned.clarification.candidates };
+        if (spawned.progress) {
+          pending = { input, ...spawned.progress };
         }
         return record(
           draftOf(

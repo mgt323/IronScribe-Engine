@@ -102,6 +102,23 @@ describe('resolveDndSpawn', () => {
     );
   });
 
+  it('a red dragon query keeps the young red dragon among the candidates', () => {
+    const dragons = resolveDndSpawn(state, { query: 'red dragon', count: 1 }, catalog);
+    expect(dragons.status).toBe('ambiguous');
+    if (dragons.status !== 'ambiguous') return;
+    expect(dragons.candidates.map((candidate) => candidate.id)).toContain('young-red-dragon');
+  });
+
+  it('rejects a turn whose slots add up to more than 10', () => {
+    expect(() =>
+      resolveDndSpawn(state, { query: 'wolf', count: 4, turnTotal: 11 }, catalog),
+    ).toThrow();
+    const allowed = resolveDndSpawn(state, { query: 'wolf', count: 4, turnTotal: 10 }, catalog);
+    expect(allowed.status).toBe('matched');
+    if (allowed.status !== 'matched') return;
+    expect(allowed.entities).toHaveLength(4);
+  });
+
   it('an unknown name is not found, and count or attitude outside the rules throws', () => {
     expect(resolveDndSpawn(state, { query: 'xyzzy', count: 1 }, catalog).status).toBe('not_found');
     expect(() => resolveDndSpawn(state, { query: 'wolf', count: 0 }, catalog)).toThrow();

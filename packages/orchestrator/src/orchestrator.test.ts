@@ -8,9 +8,15 @@ import { createOrchestrator } from './orchestrator.js';
 const intent = (value: Record<string, unknown>) => JSON.stringify(value);
 const idle = {
   spawnIsNew: true,
-  spawnQuery: null,
-  spawnCount: null,
-  spawnAttitude: null,
+  spawn1Query: null,
+  spawn1Count: null,
+  spawn1Attitude: null,
+  spawn2Query: null,
+  spawn2Count: null,
+  spawn2Attitude: null,
+  spawn3Query: null,
+  spawn3Count: null,
+  spawn3Attitude: null,
   checkAbility: null,
   checkSkill: null,
   wantsAction: false,
@@ -46,9 +52,9 @@ describe('turn history', () => {
       {
         text: intent({
           ...idle,
-          spawnQuery: 'rat',
-          spawnCount: 1,
-          spawnAttitude: 'hostile',
+          spawn1Query: 'rat',
+          spawn1Count: 1,
+          spawn1Attitude: 'hostile',
           checkAbility: 'dex',
           checkSkill: 'stealth',
           wantsAction: true,
@@ -90,9 +96,9 @@ describe('turn history', () => {
       {
         text: intent({
           ...idle,
-          spawnQuery: 'rat',
-          spawnCount: 1,
-          spawnAttitude: 'hostile',
+          spawn1Query: 'rat',
+          spawn1Count: 1,
+          spawn1Attitude: 'hostile',
           wantsAction: true,
         }),
       },
@@ -176,7 +182,9 @@ describe('turn history', () => {
         }),
       },
       { text: 'Waited.' },
-      { text: intent({ ...idle, spawnQuery: 'goblin', spawnCount: 1, spawnAttitude: 'hostile' }) },
+      {
+        text: intent({ ...idle, spawn1Query: 'goblin', spawn1Count: 1, spawn1Attitude: 'hostile' }),
+      },
       { text: intent({ ...idle, wantsAction: true }) },
       {
         text: intent({
@@ -204,7 +212,9 @@ describe('turn history', () => {
 
   it('keeps the spawn count when the player answers a clarification', async () => {
     const { engine, orchestrator } = scene([
-      { text: intent({ ...idle, spawnQuery: 'goblin', spawnCount: 2, spawnAttitude: 'hostile' }) },
+      {
+        text: intent({ ...idle, spawn1Query: 'goblin', spawn1Count: 2, spawn1Attitude: 'hostile' }),
+      },
       { text: 'Two of them.' },
     ]);
     const asked = await orchestrator.runTurn('Two goblins in front of me.');
@@ -217,7 +227,7 @@ describe('turn history', () => {
 
   it('ignores a spawn query that is an id already in the scene', async () => {
     const { engine, orchestrator } = scene([
-      { text: intent({ ...idle, spawnQuery: 'hero', spawnCount: 1, spawnAttitude: 'hostile' }) },
+      { text: intent({ ...idle, spawn1Query: 'hero', spawn1Count: 1, spawn1Attitude: 'hostile' }) },
     ]);
     const result = await orchestrator.runTurn('I look at myself.');
     expect(result.status).toBe('none');
@@ -226,15 +236,15 @@ describe('turn history', () => {
 
   it('ignores a spawn when the player refers to someone already present', async () => {
     const { engine, orchestrator } = scene([
-      { text: intent({ ...idle, spawnQuery: 'rat', spawnCount: 1, spawnAttitude: 'hostile' }) },
+      { text: intent({ ...idle, spawn1Query: 'rat', spawn1Count: 1, spawn1Attitude: 'hostile' }) },
       { text: 'A rat.' },
       {
         text: intent({
           ...idle,
           spawnIsNew: false,
-          spawnQuery: 'rat',
-          spawnCount: 1,
-          spawnAttitude: 'hostile',
+          spawn1Query: 'rat',
+          spawn1Count: 1,
+          spawn1Attitude: 'hostile',
         }),
       },
     ]);

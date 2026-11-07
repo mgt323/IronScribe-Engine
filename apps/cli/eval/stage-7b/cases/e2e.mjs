@@ -131,8 +131,6 @@ export const E2E_CASES = [
     id: 'e2e-spawn-young-red-dragon',
     category: 'e2e',
     tier: 'full',
-    known:
-      'Spawn (7C): the model queries "red dragon" and drops "young", so the GM asks which dragon, and the answer "the young red dragon" is read the same way. The case needs a named variant to spawn.',
     about:
       'A young red dragon from prose, with at most one follow-up answer, ends up in the scene.',
     steps: async (ctx) => {
@@ -144,6 +142,23 @@ export const E2E_CASES = [
     check: (ctx) =>
       livingHostiles(ctx).some((e) => baseId(e.id) === 'young-red-dragon') ||
       'no young red dragon in the scene',
+  },
+  {
+    id: 'e2e-spawn-mixed-group',
+    category: 'e2e',
+    tier: 'full',
+    about: '7C.2: one sentence spawns a wolf and a bandit, one of each.',
+    steps: async (ctx) => {
+      await ctx.send('A wolf and a bandit come out of the trees.');
+    },
+    check: (ctx) =>
+      rules(
+        [ofKind(ctx, 'wolf').length === 1, `expected one wolf, got ${ofKind(ctx, 'wolf').length}`],
+        [
+          ofKind(ctx, 'bandit').length === 1,
+          `expected one bandit, got ${ofKind(ctx, 'bandit').length}`,
+        ],
+      ),
   },
   {
     id: 'e2e-narration-ignores-unspawned-creature',

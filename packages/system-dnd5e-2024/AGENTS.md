@@ -55,7 +55,9 @@ conditions, damageTypes, abilityScores, skills }`, each a `CatalogSection`
   `combat_active` during an encounter. A plural is singularized only when
   that lookup is empty (`wolves` → `wolf`). Ambiguous matches are capped at 10.
   Count is 1..10. Attitude is `hostile`, `neutral`, or `friendly` (default
-  `hostile`) and is stored on `entity.system.attitude`
+  `hostile`) and is stored on `entity.system.attitude`. `SpawnRequest.turnTotal`,
+  when set, is the sum of every spawn count in the turn and must be from the
+  request's own count up to 10 (`MAX_TURN_SPAWN`)
 - Dying (7B.1, SRD 5.2.1): `entity.system.deathSaves` is `{successes, failures, stable, dead}`
   (null = not dying). Reduced to 0 HP: Unconscious plus a fresh tally; a remainder at or above
   the HP maximum is instant death. Damage at 0 HP: 1 failure (2 on a critical hit), ends

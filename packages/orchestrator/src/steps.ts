@@ -4,7 +4,6 @@ import {
   type EntityId,
   type Fact,
   type RuleSystem,
-  type SpawnResolution,
 } from '@iron-scribe/engine-core';
 import type { LlmClient, StructuredPrompt } from '@iron-scribe/llm';
 
@@ -16,7 +15,6 @@ import {
   targetAliasesOf,
   type TurnIntent,
 } from './schemas.js';
-import type { TurnClarification } from './types.js';
 
 export interface StepContext {
   readonly engine: Engine;
@@ -25,34 +23,6 @@ export interface StepContext {
   readonly actorId: EntityId;
   /** The target of the actor's last targeted action, so "again" has a referent. */
   readonly memory: { lastTargetId: EntityId | null };
-}
-
-type Unmatched = Exclude<SpawnResolution, { status: 'matched' }>;
-
-export function clarificationFor(resolution: Unmatched): TurnClarification {
-  if (resolution.status === 'combat_active') {
-    return {
-      reason: 'combat_active',
-      query: resolution.query,
-      candidates: [],
-      message: 'Cannot spawn new creatures during active combat.',
-    };
-  }
-  if (resolution.status === 'not_found') {
-    return {
-      reason: 'unknown_spawn',
-      query: resolution.query,
-      candidates: [],
-      message: `No catalog match for "${resolution.query}".`,
-    };
-  }
-  const names = resolution.candidates.map((candidate) => candidate.name).join(', ');
-  return {
-    reason: 'ambiguous_spawn',
-    query: resolution.query,
-    candidates: resolution.candidates,
-    message: `"${resolution.query}" matches ${names}. Which one?`,
-  };
 }
 
 export async function readIntent(
@@ -72,42 +42,6 @@ export async function readIntent(
   });
   raw.push(...result.attempts.map((attempt) => attempt.rawText));
   return result.data;
-}
-
-/** Commits a matched spawn. An unmatched catalog query is a clarification, not a commit. */
-export function spawnFrom(
-  ctx: StepContext,
-  intent: TurnIntent,
-): {
-  facts: Fact[];
-  clarification: TurnClarification | null;
-} {
-  if (intent.spawnQuery === null) return { facts: [], clarification: null };
-  // The player refers to creatures already in the scene, so nothing arrives.
-  if (!intent.spawnIsNew) return { facts: [], clarification: null };
-  // The model named someone already in the scene (an entity id), not a new creature.
-  if (ctx.engine.state.entities[intent.spawnQuery] !== undefined) {
-    return { facts: [], clarification: null };
-  }
-  if (!ctx.system.resolveSpawn) {
-    throw new EngineError('no_procedure_handler', 'This system cannot spawn');
-  }
-  if (intent.spawnCount === null || intent.spawnAttitude === null) {
-    throw new EngineError('unknown_alias', 'Spawn needs a count and an attitude');
-  }
-  const resolution = ctx.system.resolveSpawn(ctx.engine.state, {
-    query: intent.spawnQuery,
-    count: intent.spawnCount,
-    attitude: intent.spawnAttitude,
-  });
-  if (resolution.status !== 'matched') {
-    return { facts: [], clarification: clarificationFor(resolution) };
-  }
-  ctx.engine.commit(
-    'spawn',
-    resolution.entities.map((entity) => ({ type: 'entity.spawned' as const, entity })),
-  );
-  return { facts: [...resolution.facts], clarification: null };
 }
 
 export function checkFrom(ctx: StepContext, intent: TurnIntent): Fact[] {

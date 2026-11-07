@@ -5,15 +5,16 @@
  * failure here is not a model problem) and gives the live model a ceiling to match.
  */
 const WORDS = [
+  ['young red dragon', 'young red dragon', 'hostile'],
   ['wolf', 'wolf', 'hostile'],
   ['wolves', 'wolf', 'hostile'],
   ['goblin', 'goblin', 'hostile'],
   ['hydra', 'hydra', 'hostile'],
-  ['young red dragon', 'young red dragon', 'hostile'],
+  ['bandit', 'bandit', 'hostile'],
   ['dragon', 'young red dragon', 'hostile'],
   ['guard', 'guard', 'friendly'],
 ];
-const COUNTS = { two: 2, three: 3, four: 4 };
+const COUNTS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
 const DART_COUNTS = { one: 1, two: 2, three: 3, 1: 1, 2: 2, 3: 3 };
 const ORDINALS = ['first', 'second', 'third', 'fourth'];
 const SPELLS = [
@@ -40,6 +41,48 @@ const present = (scene) =>
     .split('\n')
     .map((l) => l.toLowerCase()) ?? [];
 
+function findHits(line) {
+  const found = [];
+  for (const [word, query, attitude] of WORDS) {
+    const re = new RegExp(`\\b${word}s?\\b`, 'g');
+    for (const match of line.matchAll(re)) {
+      found.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        query,
+        attitude,
+      });
+    }
+  }
+  found.sort((a, b) => a.start - b.start || b.end - a.end);
+  const taken = [];
+  for (const hit of found) {
+    if (taken.some((kept) => hit.start < kept.end && hit.end > kept.start)) continue;
+    taken.push(hit);
+  }
+  return taken;
+}
+
+function countBefore(line, start, previousEnd) {
+  const slice = line.slice(previousEnd, start);
+  let count = 1;
+  for (const [word, value] of Object.entries(COUNTS)) {
+    if (new RegExp(`\\b${word}\\b`).test(slice)) count = value;
+  }
+  return count;
+}
+
+function slotFields(hits) {
+  const fields = {};
+  for (let n = 1; n <= 3; n += 1) {
+    const hit = hits[n - 1];
+    fields[`spawn${n}Query`] = hit?.query ?? null;
+    fields[`spawn${n}Count`] = hit?.count ?? null;
+    fields[`spawn${n}Attitude`] = hit?.attitude ?? null;
+  }
+  return fields;
+}
+
 function intent(scene) {
   const line = scene.split('Player: ').at(-1).toLowerCase();
   const here = present(scene).join(' ');
@@ -47,14 +90,18 @@ function intent(scene) {
     /\b(stab|attack|shoot|swing|finish|strike|loose|cast|hurl|unleash|fire|blast|conjure)\b/.test(
       line,
     );
-  const hit = WORDS.find(([w]) => new RegExp(`\\b${w}s?\\b`).test(line));
-  const isNew = !!hit && !strike && !here.includes(hit[1].split(' ')[0]);
-  const count = Object.entries(COUNTS).find(([w]) => new RegExp(`\\b${w}\\b`).test(line))?.[1] ?? 1;
+  let previousEnd = 0;
+  const hits = findHits(line)
+    .map((hit) => {
+      const count = countBefore(line, hit.start, previousEnd);
+      previousEnd = hit.end;
+      return { ...hit, count };
+    })
+    .filter((hit) => !here.includes(hit.query.split(' ')[0]));
+  const isNew = !strike && hits.length > 0;
   return {
     spawnIsNew: isNew,
-    spawnQuery: isNew ? hit[1] : null,
-    spawnCount: isNew ? count : null,
-    spawnAttitude: isNew ? hit[2] : null,
+    ...slotFields(isNew ? hits : []),
     checkAbility: null,
     checkSkill: null,
     wantsAction: strike,

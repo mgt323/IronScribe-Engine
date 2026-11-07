@@ -3,15 +3,39 @@ import { z } from 'zod';
 
 const ATTITUDES = ['hostile', 'neutral', 'friendly'] as const;
 
+export type SpawnAttitude = (typeof ATTITUDES)[number];
+
+/** One catalog spawn. Later slots stay null until the earlier ones are filled. */
+export interface SpawnSlotInput {
+  readonly query: string | null;
+  readonly count: number | null;
+  readonly attitude: SpawnAttitude | null;
+}
+
 export interface TurnIntent {
   /** True only when the spawn names creatures that were not in Present before this sentence. */
   readonly spawnIsNew: boolean;
-  readonly spawnQuery: string | null;
-  readonly spawnCount: number | null;
-  readonly spawnAttitude: (typeof ATTITUDES)[number] | null;
+  readonly spawn1Query: string | null;
+  readonly spawn1Count: number | null;
+  readonly spawn1Attitude: SpawnAttitude | null;
+  readonly spawn2Query: string | null;
+  readonly spawn2Count: number | null;
+  readonly spawn2Attitude: SpawnAttitude | null;
+  readonly spawn3Query: string | null;
+  readonly spawn3Count: number | null;
+  readonly spawn3Attitude: SpawnAttitude | null;
   readonly checkAbility: string | null;
   readonly checkSkill: string | null;
   readonly wantsAction: boolean;
+}
+
+/** The three spawn slots, in order. */
+export function spawnSlotsOf(intent: TurnIntent): readonly SpawnSlotInput[] {
+  return [
+    { query: intent.spawn1Query, count: intent.spawn1Count, attitude: intent.spawn1Attitude },
+    { query: intent.spawn2Query, count: intent.spawn2Count, attitude: intent.spawn2Attitude },
+    { query: intent.spawn3Query, count: intent.spawn3Count, attitude: intent.spawn3Attitude },
+  ];
 }
 
 export interface ActionDecision {
@@ -34,28 +58,59 @@ function issue(ctx: z.RefinementCtx, message: string): void {
   ctx.addIssue({ code: 'custom', message });
 }
 
+function querySchema(enabled: boolean) {
+  return enabled ? z.string().nullable() : z.null();
+}
+
+function countSchema(enabled: boolean) {
+  return enabled ? z.number().int().min(1).max(10).nullable() : z.null();
+}
+
+function attitudeSchema(enabled: boolean) {
+  return enabled ? z.enum(ATTITUDES).nullable() : z.null();
+}
+
+function refineSpawnSlots(slots: readonly SpawnSlotInput[], ctx: z.RefinementCtx): void {
+  let seenEmpty = false;
+  let total = 0;
+  for (const slot of slots) {
+    const filled = slot.query !== null;
+    const complete = slot.count !== null && slot.attitude !== null;
+    const blank = typeof slot.query === 'string' && slot.query.trim() === '';
+    if (filled !== complete || blank) {
+      issue(ctx, 'spawn needs a query, a count from 1 to 10, and an attitude');
+    }
+    if (filled && seenEmpty) issue(ctx, 'spawn slots must be filled in order');
+    if (!filled) seenEmpty = true;
+    if (filled && typeof slot.count === 'number') total += slot.count;
+  }
+  if (total > 10) issue(ctx, 'a turn can spawn at most 10 creatures');
+}
+
 /** What the player is trying to do. No aliases and no DC: those are not known yet. */
 export function buildIntentSchema(
   checkCatalog: CheckCatalog | undefined,
   hasSpawnSupport: boolean,
 ): z.ZodType<TurnIntent> {
+  const on = hasSpawnSupport;
   return z
     .strictObject({
       spawnIsNew: z.boolean(),
-      spawnQuery: hasSpawnSupport ? z.string().nullable() : z.null(),
-      spawnCount: hasSpawnSupport ? z.number().int().min(1).max(10).nullable() : z.null(),
-      spawnAttitude: hasSpawnSupport ? z.enum(ATTITUDES).nullable() : z.null(),
+      spawn1Query: querySchema(on),
+      spawn1Count: countSchema(on),
+      spawn1Attitude: attitudeSchema(on),
+      spawn2Query: querySchema(on),
+      spawn2Count: countSchema(on),
+      spawn2Attitude: attitudeSchema(on),
+      spawn3Query: querySchema(on),
+      spawn3Count: countSchema(on),
+      spawn3Attitude: attitudeSchema(on),
       checkAbility: nullableEnum(checkCatalog?.abilities ?? []),
       checkSkill: nullableEnum(checkCatalog?.skills ?? []),
       wantsAction: z.boolean(),
     })
     .superRefine((value, ctx) => {
-      const spawning = value.spawnQuery !== null;
-      const complete = value.spawnCount !== null && value.spawnAttitude !== null;
-      const blank = typeof value.spawnQuery === 'string' && value.spawnQuery.trim() === '';
-      if (spawning !== complete || blank) {
-        issue(ctx, 'spawn needs a query, a count from 1 to 10, and an attitude');
-      }
+      refineSpawnSlots(spawnSlotsOf(value), ctx);
       if (value.checkSkill !== null && value.checkAbility === null) {
         issue(ctx, 'a skill check needs an ability');
       }

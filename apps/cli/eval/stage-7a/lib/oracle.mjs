@@ -44,9 +44,15 @@ function intent(scene) {
     Object.entries(COUNTS).find(([w]) => new RegExp(`\\b${w}s?\\b`).test(line))?.[1] ?? 1;
   return {
     spawnIsNew,
-    spawnQuery: spawnIsNew ? hit[1] : null,
-    spawnCount: spawnIsNew ? count : null,
-    spawnAttitude: spawnIsNew ? hit[2] : null,
+    spawn1Query: spawnIsNew ? hit[1] : null,
+    spawn1Count: spawnIsNew ? count : null,
+    spawn1Attitude: spawnIsNew ? hit[2] : null,
+    spawn2Query: null,
+    spawn2Count: null,
+    spawn2Attitude: null,
+    spawn3Query: null,
+    spawn3Count: null,
+    spawn3Attitude: null,
     checkAbility: null,
     checkSkill: null,
     wantsAction: strike,
